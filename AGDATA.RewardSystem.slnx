@@ -1,6 +1,1 @@
-<Solution>
-  <Project Path="RewardSystem Test/RewardSystem Test.csproj" />
-  <Project Path="RewardSystem_Application/RewardSystem_Application.csproj" />
-  <Project Path="Rewardsystem_Domain/Rewardsystem_Domain.csproj" />
-  <Project Path="RewardSystem_Infrastructure/RewardSystem_Infrastructure.csproj" />
-</Solution>
+<Solution />
