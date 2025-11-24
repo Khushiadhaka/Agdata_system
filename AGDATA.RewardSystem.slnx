@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="API/API.csproj" Id="bcfe8d96-b69a-4a97-8a85-c49b3528a79c" />
   <Project Path="RewardSystem Test/RewardSystem Test.csproj" />
   <Project Path="RewardSystem_Application/RewardSystem_Application.csproj" />
   <Project Path="Rewardsystem_Domain/Rewardsystem_Domain.csproj" />
