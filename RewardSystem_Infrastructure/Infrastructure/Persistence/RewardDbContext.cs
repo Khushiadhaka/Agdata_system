@@ -174,7 +174,7 @@ namespace RewardSystem_Infrastructure.Infrastructure.Persistence
                 entity.Property(pi => pi.StockQuantity).IsRequired();
                 entity.Property(pi => pi.IsActive).IsRequired();
 
-                
+
             });
 
             //REWARDS & POINTS

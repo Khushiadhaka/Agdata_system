@@ -10,7 +10,7 @@ namespace RewardSystem_Infrastructure.Persistence
         {
             var optionsBuilder = new DbContextOptionsBuilder<RewardDbContext>();
 
-            // 👇 Your machine + SQL Express + custom DB name
+           
             var conn = "Server=DESKTOP-96J8AK0\\SQLEXPRESS;" +
                        "Database=RewardSystemDb;" +
                        "Integrated Security=True;" +
