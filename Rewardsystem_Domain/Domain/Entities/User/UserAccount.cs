@@ -1,30 +1,31 @@
-﻿using Rewardsystem_Domain.Domain.Common;
+﻿using System;
+using Rewardsystem_Domain.Domain.Common;
 using Rewardsystem_Domain.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Rewardsystem_Domain.Domain.Entities.User
 {
-    // Stores reward points for a user
+    // Stores reward points balance + login credentials for a user.
     public sealed class UserAccount : BaseEntity
     {
-        // Identifier of the owning user
+        // Associated User ID
         public Guid UserId { get; private set; }
 
         // Current points balance
         public int Points { get; private set; }
 
-        // Account status (for blocking redemptions etc.)
-        public AccountStatus Status { get; private set; } = AccountStatus.Active;
+        // Account status (Active/Inactive)
+        public AccountStatus Status { get; private set; }
 
-        // Navigation back to user
+        // Hashed password used for authentication
+        public string PasswordHash { get; private set; } = string.Empty;
+
+        // Navigation property to User
         public User? User { get; private set; }
 
-        // Parameterless constructor for EF
+        // Constructor for EF Core
         private UserAccount() { }
 
-        // Creates a new account for a user
+        // Main constructor – new account starts with 0 points and Active status
         public UserAccount(Guid userId)
         {
             if (userId == Guid.Empty)
@@ -32,9 +33,20 @@ namespace Rewardsystem_Domain.Domain.Entities.User
 
             UserId = userId;
             Points = 0;
+            Status = AccountStatus.Active;
         }
 
-        // Adds points to the account
+        // Set / change hashed password
+        public void SetPasswordHash(string passwordHash)
+        {
+            if (string.IsNullOrWhiteSpace(passwordHash))
+                throw new ValidationException("Password hash cannot be empty.");
+
+            PasswordHash = passwordHash;
+            MarkUpdated();
+        }
+
+        // Add points to balance
         public void AddPoints(int points)
         {
             if (points <= 0)
@@ -47,20 +59,20 @@ namespace Rewardsystem_Domain.Domain.Entities.User
             MarkUpdated();
         }
 
-        // Deducts points from the account
+        // Deduct points from balance
         public void DeductPoints(int points)
         {
             if (points <= 0)
                 throw new ValidationException("Points must be greater than 0.");
 
             if (Points < points)
-                throw new BusinessRuleException("Insufficient points for deduction.");
+                throw new BusinessRuleException("Insufficient points.");
 
             Points -= points;
             MarkUpdated();
         }
 
-        // Sets points directly
+        // Set exact points (admin use)
         public void SetPoints(int points)
         {
             if (points < 0)
@@ -73,9 +85,6 @@ namespace Rewardsystem_Domain.Domain.Entities.User
         // Activate account
         public void Activate()
         {
-            if (Status == AccountStatus.Active)
-                throw new BusinessRuleException("Account is already active.");
-
             Status = AccountStatus.Active;
             MarkUpdated();
         }
@@ -83,9 +92,6 @@ namespace Rewardsystem_Domain.Domain.Entities.User
         // Deactivate account
         public void Deactivate()
         {
-            if (Status == AccountStatus.Inactive)
-                throw new BusinessRuleException("Account is already inactive.");
-
             Status = AccountStatus.Inactive;
             MarkUpdated();
         }

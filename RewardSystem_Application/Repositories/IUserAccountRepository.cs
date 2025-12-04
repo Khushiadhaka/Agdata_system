@@ -1,14 +1,17 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Rewardsystem_Domain.Domain.Entities.User;
+﻿using Rewardsystem_Domain.Domain.Entities.User;
 
 namespace RewardSystem_Application.Repositories
 {
-    // Repository for UserAccount entity
-    public interface IUserAccountRepository : IRepository<UserAccount>
+    // Repository for UserAccount (points + credentials).
+    public interface IUserAccountRepository
     {
-        // Gets account by user id
-        Task<UserAccount?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+        // Add new UserAccount entity.
+        Task AddAsync(UserAccount account, CancellationToken ct = default);
+
+        // Update existing UserAccount.
+        Task UpdateAsync(UserAccount account, CancellationToken ct = default);
+
+        // Get UserAccount by associated UserId.
+        Task<UserAccount?> GetByUserIdAsync(Guid userId, CancellationToken ct = default);
     }
 }

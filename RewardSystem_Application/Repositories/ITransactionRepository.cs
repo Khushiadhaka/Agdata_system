@@ -1,16 +1,21 @@
-﻿using Rewardsystem_Domain.Domain.Common;
-using Rewardsystem_Domain.Domain.Entities.Transactions;
-using Rewardsystem_Domain.Domain.Enums;
+﻿// Business transaction repository abstraction.
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Rewardsystem_Domain.Domain.Entities.Transactions;
 
 namespace RewardSystem_Application.Repositories
 {
-    public interface ITransactionRepository : IRepository<Transaction>
+    // Business transaction repository abstraction.
+    public interface ITransactionRepository
     {
-        Task<IReadOnlyList<Transaction>> GetByTypeAsync(
-            TransactionType type,
-            CancellationToken cancellationToken = default);
+        Task AddAsync(Transaction transaction, CancellationToken ct = default);
+
+        Task<Transaction?> GetByIdAsync(Guid id, CancellationToken ct = default);
+
+        Task<IReadOnlyList<Transaction>> GetByUserIdAsync(
+            Guid userId,
+            CancellationToken ct = default);
     }
 }

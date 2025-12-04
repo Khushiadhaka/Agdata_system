@@ -1,30 +1,28 @@
-﻿using Rewardsystem_Domain.Domain.Common;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
+using Rewardsystem_Domain.Domain.Common;
 
 namespace Rewardsystem_Domain.Domain.Entities.Reward
 {
-    // Defines point configuration for a reward
+    // Configuration of how many points a Reward grants (or requires).
     public sealed class RewardPoints : BaseEntity
     {
-        // Identifier of the reward
+        // Associated Reward identifier.
         public Guid RewardId { get; private set; }
 
-        // Points associated with this reward
+        // Points value for this configuration (positive integer).
         public int Points { get; private set; }
 
-        // Optional effective-from date
+        // Optional effective start date for this configuration.
         public DateTime? EffectiveFrom { get; private set; }
 
-        // Optional effective-to date
+        // Optional effective end date for this configuration.
         public DateTime? EffectiveTo { get; private set; }
 
-        // Parameterless constructor for EF
+        // Parameterless constructor for EF Core.
         private RewardPoints() { }
 
-        // Creates a new reward points configuration
-        public RewardPoints(Guid rewardId, int points, DateTime? effectiveFrom, DateTime? effectiveTo)
+        // Main constructor with validation.
+        public RewardPoints(Guid rewardId, int points, DateTime? effectiveFrom = null, DateTime? effectiveTo = null)
         {
             if (rewardId == Guid.Empty)
                 throw new ValidationException("RewardId cannot be empty.");
@@ -41,8 +39,8 @@ namespace Rewardsystem_Domain.Domain.Entities.Reward
             EffectiveTo = effectiveTo;
         }
 
-        // Updates points configuration
-        public void UpdatePoints(int points, DateTime? effectiveFrom, DateTime? effectiveTo)
+        // Update points configuration with validation.
+        public void UpdatePoints(int points, DateTime? effectiveFrom = null, DateTime? effectiveTo = null)
         {
             if (points <= 0)
                 throw new ValidationException("Points must be greater than zero.");
@@ -55,6 +53,14 @@ namespace Rewardsystem_Domain.Domain.Entities.Reward
             EffectiveTo = effectiveTo;
 
             MarkUpdated();
+        }
+
+        // Check whether this configuration is currently active (by date).
+        public bool IsEffective(DateTime at)
+        {
+            if (EffectiveFrom.HasValue && at < EffectiveFrom.Value) return false;
+            if (EffectiveTo.HasValue && at > EffectiveTo.Value) return false;
+            return true;
         }
     }
 }

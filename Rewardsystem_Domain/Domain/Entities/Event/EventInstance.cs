@@ -3,38 +3,44 @@ using Rewardsystem_Domain.Domain.Common;
 
 namespace Rewardsystem_Domain.Domain.Entities.Event
 {
-    // Represents a scheduled instance of an event definition
+    // Represents a scheduled instance of an EventDefinition.
     public sealed class EventInstance : BaseEntity
     {
-        // Identifier of the event definition
+        // Identifier of the EventDefinition this instance belongs to.
         public Guid EventDefinitionId { get; private set; }
 
-        // Start time of the instance
+        // Start time (UTC) of the event instance.
         public DateTime StartTime { get; private set; }
 
-        // End time of the instance
+        // End time (UTC) of the event instance.
         public DateTime EndTime { get; private set; }
 
-        // Flag indicating completion
+        // Flag indicating whether the instance is completed.
         public bool IsCompleted { get; private set; }
 
-        // Flag indicating cancellation
+        // Flag indicating whether the instance was cancelled.
         public bool IsCancelled { get; private set; }
 
-        // Winner user ID (if any)
+        // Optional winner user id (if any).
         public Guid? WinnerUserId { get; private set; }
 
-        // Rank of the winner (1st, 2nd, 3rd...)
+        // Optional rank of the winner (1 => first place).
         public int? Rank { get; private set; }
 
-        // Parameterless constructor for EF
+        // Parameterless constructor for EF Core.
         private EventInstance() { }
 
-        // Creates a new event instance
+        // Main constructor with validation.
         public EventInstance(Guid eventDefinitionId, DateTime startTime, DateTime endTime)
         {
             if (eventDefinitionId == Guid.Empty)
                 throw new ValidationException("EventDefinitionId cannot be empty.");
+
+            if (startTime.Kind == DateTimeKind.Unspecified)
+                startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
+
+            if (endTime.Kind == DateTimeKind.Unspecified)
+                endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
 
             if (endTime <= startTime)
                 throw new ValidationException("End time must be after start time.");
@@ -46,11 +52,11 @@ namespace Rewardsystem_Domain.Domain.Entities.Event
             IsCancelled = false;
         }
 
-        // Assign winner
+        // Assign a winner with rank.
         public void AssignWinner(Guid winnerUserId, int rank)
         {
             if (winnerUserId == Guid.Empty)
-                throw new ValidationException("Winner user Id cannot be empty.");
+                throw new ValidationException("Winner user id cannot be empty.");
 
             if (rank <= 0)
                 throw new ValidationException("Rank must be greater than zero.");
@@ -60,7 +66,7 @@ namespace Rewardsystem_Domain.Domain.Entities.Event
             MarkUpdated();
         }
 
-        // Marks instance as completed
+        // Mark instance as completed (cannot be cancelled afterwards).
         public void MarkCompleted()
         {
             if (IsCancelled)
@@ -73,7 +79,7 @@ namespace Rewardsystem_Domain.Domain.Entities.Event
             MarkUpdated();
         }
 
-        // Cancels the instance
+        // Cancel the instance (if not completed).
         public void Cancel()
         {
             if (IsCompleted)
@@ -86,17 +92,20 @@ namespace Rewardsystem_Domain.Domain.Entities.Event
             MarkUpdated();
         }
 
-        // Extends the end time
+        // Extend the end time (business action).
         public void ExtendEndTime(DateTime newEndTime)
         {
+            if (newEndTime.Kind == DateTimeKind.Unspecified)
+                newEndTime = DateTime.SpecifyKind(newEndTime, DateTimeKind.Utc);
+
+            if (newEndTime <= EndTime)
+                throw new ValidationException("New end time must be later than current end time.");
+
             if (IsCancelled)
                 throw new BusinessRuleException("Cancelled instance cannot be modified.");
 
             if (IsCompleted)
                 throw new BusinessRuleException("Completed instance cannot be modified.");
-
-            if (newEndTime <= EndTime)
-                throw new ValidationException("New end time must be later than current end time.");
 
             EndTime = newEndTime;
             MarkUpdated();

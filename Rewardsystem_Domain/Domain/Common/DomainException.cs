@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Rewardsystem_Domain.Domain.Common
 {
-    // Base exception type for domain errors
+    // Base class for all custom domain exceptions
     public abstract class DomainException : Exception
     {
-        // Creates a new domain exception with message
+        // Constructor accepts message
         protected DomainException(string message) : base(message) { }
     }
 }
+

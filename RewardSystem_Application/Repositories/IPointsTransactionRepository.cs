@@ -6,12 +6,10 @@ using Rewardsystem_Domain.Domain.Entities.Reward;
 namespace RewardSystem_Application.Repositories
 {
 
-    // Repository abstraction for audit history of points movement
-    public interface IPointsTransactionRepository : IRepository<PointsTransaction>
+    public interface IPointsTransactionRepository
     {
-        // Return all points transactions for a specific user
-        Task<IReadOnlyList<PointsTransaction>> GetByUserIdAsync(
-            Guid userId,
-            CancellationToken cancellationToken = default);
+        Task AddAsync(PointsTransaction tx, CancellationToken ct = default);
+
+        Task<IReadOnlyList<PointsTransaction>> GetByUserIdAsync(Guid userId, CancellationToken ct = default);
     }
 }

@@ -3,26 +3,26 @@ using Rewardsystem_Domain.Domain.Common;
 
 namespace Rewardsystem_Domain.Domain.Entities.Event
 {
-    // Represents a reusable definition of an event type
+    // Reusable definition of an event type (template).
     public sealed class EventDefinition : BaseEntity
     {
-        // Name of the event definition
+        // Definition name (non-nullable, default empty).
         public string Name { get; private set; } = string.Empty;
 
-        // Description of the event definition
+        // Description for the definition (non-nullable, default empty).
         public string Description { get; private set; } = string.Empty;
 
-        // Default reward points for this definition
+        // Default reward points associated with this definition.
         public int RewardPoints { get; private set; }
 
-        // Indicates whether the definition is active
-        public bool IsActive { get; private set; }
+        // Whether this definition is active and can be used.
+        public bool IsActive { get; private set; } = true;
 
-        // Parameterless constructor for EF
+        // Parameterless constructor for EF Core.
         private EventDefinition() { }
 
-        // Creates a new event definition
-        public EventDefinition(string name, string description, int rewardPoints)
+        // Main constructor with validation.
+        public EventDefinition(string name, string? description, int rewardPoints)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ValidationException("Event definition name cannot be empty.");
@@ -31,31 +31,30 @@ namespace Rewardsystem_Domain.Domain.Entities.Event
                 throw new ValidationException("Reward points must be greater than zero.");
 
             Name = name.Trim();
-            Description = description?.Trim() ?? string.Empty;
+            Description = (description ?? string.Empty).Trim();
             RewardPoints = rewardPoints;
             IsActive = true;
         }
 
-        // Updates definition
-        public void Update(string name, string description, int rewardPoints)
+        // Update definition details.
+        public void Update(string name, string? description, int rewardPoints)
         {
+            if (!IsActive)
+                throw new BusinessRuleException("Cannot update an inactive event definition.");
+
             if (string.IsNullOrWhiteSpace(name))
                 throw new ValidationException("Event definition name cannot be empty.");
 
             if (rewardPoints <= 0)
                 throw new ValidationException("Reward points must be greater than zero.");
 
-            if (!IsActive)
-                throw new BusinessRuleException("Cannot update an inactive event definition.");
-
             Name = name.Trim();
-            Description = description?.Trim() ?? string.Empty;
+            Description = (description ?? string.Empty).Trim();
             RewardPoints = rewardPoints;
-
             MarkUpdated();
         }
 
-        // Deactivates the event definition
+        // Deactivate definition.
         public void Deactivate()
         {
             if (!IsActive)
@@ -65,7 +64,7 @@ namespace Rewardsystem_Domain.Domain.Entities.Event
             MarkUpdated();
         }
 
-        // Reactivates the event definition
+        // Reactivate definition.
         public void Activate()
         {
             if (IsActive)

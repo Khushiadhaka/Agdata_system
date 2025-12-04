@@ -22,614 +22,702 @@ namespace RewardSystem_Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Event.Event", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
-
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
-
-                b.Property<string>("Description")
-                    .IsRequired()
-                    .HasMaxLength(500)
-                    .HasColumnType("nvarchar(500)");
-
-                b.Property<bool>("IsActive")
-                    .HasColumnType("bit");
-
-                b.Property<string>("Name")
-                    .IsRequired()
-                    .HasMaxLength(200)
-                    .HasColumnType("nvarchar(200)");
-
-                b.Property<DateTime>("ScheduledDate")
-                    .HasColumnType("datetime2");
-
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
-
-                b.HasKey("Id");
-
-                b.ToTable("Events", (string)null);
-            });
-
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Event.EventDefinition", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<string>("Description")
-                    .IsRequired()
-                    .HasMaxLength(500)
-                    .HasColumnType("nvarchar(500)");
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
-                b.Property<bool>("IsActive")
-                    .HasColumnType("bit");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
-                b.Property<string>("Name")
-                    .IsRequired()
-                    .HasMaxLength(200)
-                    .HasColumnType("nvarchar(200)");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
-                b.Property<int>("RewardPoints")
-                    .HasColumnType("int");
+                    b.Property<int>("RewardPoints")
+                        .HasColumnType("int");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.ToTable("EventDefinitions", (string)null);
-            });
+                    b.ToTable("EventDefinitions");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Event.EventInstance", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<DateTime>("EndTime")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("datetime2");
 
-                b.Property<Guid>("EventDefinitionId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("EventDefinitionId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<bool>("IsCancelled")
-                    .HasColumnType("bit");
+                    b.Property<bool>("IsCancelled")
+                        .HasColumnType("bit");
 
-                b.Property<bool>("IsCompleted")
-                    .HasColumnType("bit");
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
 
-                b.Property<int?>("Rank")
-                    .HasColumnType("int");
+                    b.Property<int?>("Rank")
+                        .HasColumnType("int");
 
-                b.Property<DateTime>("StartTime")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime2");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<Guid?>("WinnerUserId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid?>("WinnerUserId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.ToTable("EventInstances", (string)null);
-            });
+                    b.HasIndex("EventDefinitionId");
+
+                    b.ToTable("EventInstances");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Event.EventRewardRule", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<string>("Condition")
-                    .IsRequired()
-                    .HasMaxLength(300)
-                    .HasColumnType("nvarchar(300)");
+                    b.Property<string>("Condition")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<Guid>("EventDefinitionId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("EventDefinitionId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<bool>("IsActive")
-                    .HasColumnType("bit");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
-                b.Property<int>("Points")
-                    .HasColumnType("int");
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.ToTable("EventRewardRules", (string)null);
-            });
+                    b.HasIndex("EventDefinitionId");
+
+                    b.ToTable("EventRewardRules");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Product.Product", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<string>("Description")
-                    .IsRequired()
-                    .HasMaxLength(500)
-                    .HasColumnType("nvarchar(500)");
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
-                b.Property<bool>("IsActive")
-                    .HasColumnType("bit");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
-                b.Property<string>("Name")
-                    .IsRequired()
-                    .HasMaxLength(200)
-                    .HasColumnType("nvarchar(200)");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
-                b.Property<int>("RequiredPoints")
-                    .HasColumnType("int");
+                    b.Property<int>("RequiredPoints")
+                        .HasColumnType("int");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.ToTable("Products", (string)null);
-            });
+                    b.ToTable("Products");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Product.ProductInventory", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<bool>("IsActive")
-                    .HasColumnType("bit");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
-                b.Property<Guid>("ProductId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<int>("StockQuantity")
-                    .HasColumnType("int");
+                    b.Property<Guid?>("ProductId1")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<int>("StockQuantity")
+                        .HasColumnType("int");
 
-                b.HasKey("Id");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.ToTable("ProductInventories", (string)null);
-            });
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId")
+                        .IsUnique();
+
+                    b.HasIndex("ProductId1");
+
+                    b.ToTable("ProductInventories");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Redemption.RedemptionProcess", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<int>("PointsUsed")
-                    .HasColumnType("int");
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                b.Property<Guid>("RedemptionId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<int>("PointsUsed")
+                        .HasColumnType("int");
 
-                b.Property<int>("Status")
-                    .HasColumnType("int");
+                    b.Property<Guid>("RedemptionId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
-                b.HasKey("Id");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.ToTable("RedemptionProcesses", (string)null);
-            });
+                    b.HasKey("Id");
+
+                    b.ToTable("RedemptionProcesses");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Redemption.RedemptionRecord", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<Guid>("ProductId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("RedeemedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime>("RedeemedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                b.Property<Guid>("UserId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.HasKey("Id");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.ToTable("RedemptionRecords", (string)null);
-            });
+                    b.HasKey("Id");
+
+                    b.ToTable("RedemptionRecords");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Redemption.RedemptionRequest", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<int>("PointsUsed")
-                    .HasColumnType("int");
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                b.Property<Guid>("ProductId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<int>("PointsUsed")
+                        .HasColumnType("int");
 
-                b.Property<int>("Status")
-                    .HasColumnType("int");
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
-                b.Property<Guid>("UserId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.HasKey("Id");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.ToTable("RedemptionRequests", (string)null);
-            });
+                    b.HasKey("Id");
+
+                    b.ToTable("RedemptionRequests");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Reward.PointsTransaction", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<string>("Description")
-                    .IsRequired()
-                    .HasColumnType("nvarchar(max)");
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
-                b.Property<int>("Points")
-                    .HasColumnType("int");
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
 
-                b.Property<int>("Type")
-                    .HasColumnType("int");
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<Guid>("UserId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.ToTable("PointsTransactions", (string)null);
-            });
+                    b.ToTable("PointsTransactions");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Reward.Reward", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<string>("Description")
-                    .IsRequired()
-                    .HasMaxLength(500)
-                    .HasColumnType("nvarchar(500)");
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
-                b.Property<bool>("IsActive")
-                    .HasColumnType("bit");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
-                b.Property<string>("Name")
-                    .IsRequired()
-                    .HasMaxLength(200)
-                    .HasColumnType("nvarchar(200)");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
-                b.Property<int>("Type")
-                    .HasColumnType("int");
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.ToTable("Rewards", (string)null);
-            });
+                    b.ToTable("Rewards");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Reward.RewardPoints", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<DateTime?>("EffectiveFrom")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime?>("EffectiveFrom")
+                        .HasColumnType("datetime2");
 
-                b.Property<DateTime?>("EffectiveTo")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("datetime2");
 
-                b.Property<int>("Points")
-                    .HasColumnType("int");
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
 
-                b.Property<Guid>("RewardId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("RewardId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<Guid?>("RewardId1")
+                        .HasColumnType("uniqueidentifier");
 
-                b.HasKey("Id");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.ToTable("RewardPoints", (string)null);
-            });
+                    b.HasKey("Id");
+
+                    b.HasIndex("RewardId");
+
+                    b.HasIndex("RewardId1")
+                        .IsUnique()
+                        .HasFilter("[RewardId1] IS NOT NULL");
+
+                    b.ToTable("RewardPoints");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Reward.RewardTransaction", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<Guid?>("EventInstanceId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid?>("EventInstanceId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<int>("PointsGranted")
-                    .HasColumnType("int");
+                    b.Property<int>("PointsGranted")
+                        .HasColumnType("int");
 
-                b.Property<Guid?>("RedemptionRequestId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid?>("RedemptionRequestId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<string>("Reference")
-                    .IsRequired()
-                    .HasColumnType("nvarchar(max)");
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
-                b.Property<Guid>("RewardId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("RewardId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<int>("TransactionType")
-                    .HasColumnType("int");
+                    b.Property<int>("TransactionType")
+                        .HasColumnType("int");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<Guid>("UserId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.ToTable("RewardTransactions", (string)null);
-            });
+                    b.ToTable("RewardTransactions");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Transactions.Transaction", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<decimal>("Amount")
-                    .HasColumnType("decimal(18,2)");
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<DateTime>("Date")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
 
-                b.Property<Guid?>("ProductId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid?>("ProductId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<int>("RewardPointsEarned")
-                    .HasColumnType("int");
+                    b.Property<int>("RewardPointsEarned")
+                        .HasColumnType("int");
 
-                b.Property<int>("Status")
-                    .HasColumnType("int");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
-                b.Property<int>("Type")
-                    .HasColumnType("int");
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<Guid>("UserId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.HasKey("Id");
+                    b.HasKey("Id");
 
-                b.ToTable("Transactions", (string)null);
-            });
+                    b.ToTable("Transactions");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.User", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<string>("Email")
-                    .IsRequired()
-                    .HasMaxLength(200)
-                    .HasColumnType("nvarchar(200)");
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
-                b.Property<string>("EmployeeId")
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .HasColumnType("nvarchar(50)");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
-                b.Property<bool>("IsDeleted")
-                    .HasColumnType("bit");
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
 
-                b.Property<string>("Name")
-                    .IsRequired()
-                    .HasMaxLength(200)
-                    .HasColumnType("nvarchar(200)");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<int>("Role")
-                    .HasColumnType("int");
+                    b.HasKey("Id");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
-
-                b.HasKey("Id");
-
-                b.ToTable("Users", (string)null);
-            });
+                    b.ToTable("Users");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.UserAccount", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                b.Property<int>("Points")
-                    .HasColumnType("int");
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
-                b.Property<int>("Status")
-                    .HasColumnType("int");
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
 
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
-                b.Property<Guid>("UserId")
-                    .HasColumnType("uniqueidentifier");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
-                b.HasKey("Id");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                b.HasIndex("UserId")
-                    .IsUnique();
+                    b.HasKey("Id");
 
-                b.ToTable("UserAccounts", (string)null);
-            });
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
-            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.UserProfile", b =>
-            {
-                b.Property<Guid>("Id")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("uniqueidentifier");
-
-                b.Property<DateTime>("CreatedAt")
-                    .ValueGeneratedOnAdd()
-                    .HasColumnType("datetime2")
-                    .HasDefaultValueSql("GETUTCDATE()");
-
-                b.Property<string>("Department")
-                    .IsRequired()
-                    .HasMaxLength(100)
-                    .HasColumnType("nvarchar(100)");
-
-                b.Property<string>("Location")
-                    .IsRequired()
-                    .HasMaxLength(100)
-                    .HasColumnType("nvarchar(100)");
-
-                b.Property<string>("PhoneNumber")
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .HasColumnType("nvarchar(50)");
-
-                b.Property<DateTime?>("UpdatedAt")
-                    .HasColumnType("datetime2");
-
-                b.Property<Guid>("UserId")
-                    .HasColumnType("uniqueidentifier");
-
-                b.HasKey("Id");
-
-                b.HasIndex("UserId");
-
-                b.ToTable("UserProfiles", (string)null);
-            });
-
-            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.UserAccount", b =>
-            {
-                b.HasOne("Rewardsystem_Domain.Domain.Entities.User.User", "User")
-                    .WithOne("Account")
-                    .HasForeignKey("Rewardsystem_Domain.Domain.Entities.User.UserAccount", "UserId")
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .IsRequired();
-
-                b.Navigation("User");
-            });
+                    b.ToTable("UserAccounts");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.UserProfile", b =>
-            {
-                b.HasOne("Rewardsystem_Domain.Domain.Entities.User.User", "User")
-                    .WithMany()
-                    .HasForeignKey("UserId")
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .IsRequired();
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                b.Navigation("User");
-            });
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("UserProfiles");
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Event.EventInstance", b =>
+                {
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.Event.EventDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("EventDefinitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Event.EventRewardRule", b =>
+                {
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.Event.EventDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("EventDefinitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Product.Product", b =>
+                {
+                    b.OwnsOne("Rewardsystem_Domain.Domain.ValueObjects.SKU", "Sku", b1 =>
+                        {
+                            b1.Property<Guid>("ProductId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("nvarchar(50)")
+                                .HasColumnName("Sku");
+
+                            b1.HasKey("ProductId");
+
+                            b1.ToTable("Products");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProductId");
+                        });
+
+                    b.Navigation("Sku");
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Product.ProductInventory", b =>
+                {
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.Product.Product", null)
+                        .WithOne()
+                        .HasForeignKey("Rewardsystem_Domain.Domain.Entities.Product.ProductInventory", "ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.Product.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId1");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Reward.RewardPoints", b =>
+                {
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.Reward.Reward", null)
+                        .WithMany()
+                        .HasForeignKey("RewardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.Reward.Reward", null)
+                        .WithOne("LatestPoints")
+                        .HasForeignKey("Rewardsystem_Domain.Domain.Entities.Reward.RewardPoints", "RewardId1");
+                });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.User", b =>
-            {
-                b.Navigation("Account");
-            });
+                {
+                    b.OwnsOne("Rewardsystem_Domain.Domain.ValueObjects.Email", "Email", b1 =>
+                        {
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("nvarchar(200)")
+                                .HasColumnName("Email");
+
+                            b1.HasKey("UserId");
+
+                            b1.ToTable("Users");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
+                    b.OwnsOne("Rewardsystem_Domain.Domain.ValueObjects.EmployeeId", "EmployeeId", b1 =>
+                        {
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("nvarchar(50)")
+                                .HasColumnName("EmployeeId");
+
+                            b1.HasKey("UserId");
+
+                            b1.ToTable("Users");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
+                    b.Navigation("Email")
+                        .IsRequired();
+
+                    b.Navigation("EmployeeId")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.UserAccount", b =>
+                {
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.User.User", "User")
+                        .WithOne("Account")
+                        .HasForeignKey("Rewardsystem_Domain.Domain.Entities.User.UserAccount", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.UserProfile", b =>
+                {
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.User.User", "User")
+                        .WithOne("Profile")
+                        .HasForeignKey("Rewardsystem_Domain.Domain.Entities.User.UserProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Reward.Reward", b =>
+                {
+                    b.Navigation("LatestPoints");
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.User", b =>
+                {
+                    b.Navigation("Account");
+
+                    b.Navigation("Profile");
+                });
 #pragma warning restore 612, 618
         }
     }

@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Rewardsystem_Domain.Domain.Common
+﻿namespace Rewardsystem_Domain.Domain.Common
 {
-    // Thrown when validation rules are violated
+    // Thrown when input validation fails
     public sealed class ValidationException : DomainException
     {
-        // Creates a new validation exception with message
+        // Constructor with message
         public ValidationException(string message) : base(message) { }
     }
 }
+

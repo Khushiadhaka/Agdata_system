@@ -1,37 +1,39 @@
-﻿using Rewardsystem_Domain.Domain.Common;
+﻿using System;
+using Rewardsystem_Domain.Domain.Common;
 using Rewardsystem_Domain.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Rewardsystem_Domain.Domain.ValueObjects;
 
 namespace Rewardsystem_Domain.Domain.Entities.User
 {
-    // Represents a user in the system
+    // Represents a system user (employee).
     public sealed class User : BaseEntity
     {
-        // Display name of the user
+        // Full display name of the user (non-nullable, default empty string).
         public string Name { get; private set; } = string.Empty;
 
-        // Email address of the user
-        public string Email { get; private set; } = string.Empty;
+        // Email value object (initialized by constructor or EF).
+        public Email Email { get; private set; } = null!;
 
-        // Employee identifier
-        public string EmployeeId { get; private set; } = string.Empty;
+        // EmployeeId value object (initialized by constructor or EF).
+        public EmployeeId EmployeeId { get; private set; } = null!;
 
-        // Role assigned to the user
+        // Role of the user (Admin / User).
         public UserRole Role { get; private set; }
 
-        // Navigation to user account
-        public UserAccount? Account { get; private set; }
-
-        // Soft delete flag
+        // Soft delete flag.
         public bool IsDeleted { get; private set; }
 
-        // Parameterless constructor for EF
+        // Navigation: one-to-one user account (may be null until attached).
+        public UserAccount? Account { get; private set; }
+
+        // Navigation: one-to-one user profile (may be null until attached).
+        public UserProfile? Profile { get; private set; }
+
+        // Parameterless constructor for EF Core materialization.
         private User() { }
 
-        // Creates a new user with validation
-        public User(string name, string email, string employeeId, UserRole role)
+        // Primary constructor for creating new users with validation.
+        public User(string name, string email, string employeeId, UserRole role = UserRole.User)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ValidationException("Name cannot be empty.");
@@ -43,54 +45,64 @@ namespace Rewardsystem_Domain.Domain.Entities.User
                 throw new ValidationException("EmployeeId cannot be empty.");
 
             Name = name.Trim();
-            Email = email.Trim().ToLowerInvariant();
-            EmployeeId = employeeId.Trim();
+            Email = new Email(email);
+            EmployeeId = new EmployeeId(employeeId);
             Role = role;
             IsDeleted = false;
         }
 
-        // Updates user basic details
+        // Update user's basic details with validation and mark updated timestamp.
         public void Update(string name, string email, UserRole role)
         {
+            if (IsDeleted)
+                throw new BusinessRuleException("Cannot update a deleted user.");
+
             if (string.IsNullOrWhiteSpace(name))
                 throw new ValidationException("Name cannot be empty.");
 
             if (string.IsNullOrWhiteSpace(email))
                 throw new ValidationException("Email cannot be empty.");
 
-            if (IsDeleted)
-                throw new BusinessRuleException("Deleted user cannot be updated.");
-
             Name = name.Trim();
-            Email = email.Trim().ToLowerInvariant();
+            Email = new Email(email);
             Role = role;
 
             MarkUpdated();
         }
 
-        // Attaches a user account to this user
-        public void AttachAccount(UserAccount account)
-        {
-            if (account == null)
-                throw new ValidationException("Account cannot be null.");
-
-            if (account.UserId != Id)
-                throw new BusinessRuleException("Account user id must match user id.");
-
-            if (Account != null)
-                throw new BusinessRuleException("User already has an account.");
-
-            Account = account;
-            MarkUpdated();
-        }
-
-        // Marks the user as deleted
+        // Soft delete the user (idempotent by throwing on repeated deletes).
         public void Delete()
         {
             if (IsDeleted)
-                throw new BusinessRuleException("User is already deleted.");
+                throw new BusinessRuleException("User already deleted.");
 
             IsDeleted = true;
+            MarkUpdated();
+        }
+
+        // Attach a profile to this user (one-to-one relation).
+        public void AttachProfile(UserProfile profile)
+        {
+            if (profile is null)
+                throw new ValidationException("Profile cannot be null.");
+
+            if (profile.UserId != Id)
+                throw new BusinessRuleException("Profile does not belong to this user.");
+
+            Profile = profile;
+            MarkUpdated();
+        }
+
+        // Attach an account to this user (one-to-one relation).
+        public void AttachAccount(UserAccount account)
+        {
+            if (account is null)
+                throw new ValidationException("Account cannot be null.");
+
+            if (account.UserId != Id)
+                throw new BusinessRuleException("Account does not belong to this user.");
+
+            Account = account;
             MarkUpdated();
         }
     }

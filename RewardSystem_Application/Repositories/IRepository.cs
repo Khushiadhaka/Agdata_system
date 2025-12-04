@@ -1,17 +1,28 @@
-﻿using Rewardsystem_Domain.Domain.Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Rewardsystem_Domain.Domain.Common;
 
 namespace RewardSystem_Application.Repositories
 {
-    // Generic repository abstraction
-    public interface IRepository<T>
+    // Generic repository contract for all entities.
+    public interface IRepository<TEntity> where TEntity : BaseEntity
     {
-        Task AddAsync(T entity, CancellationToken cancellationToken = default);
-        Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-        Task<IReadOnlyList<T>> GetAllAsync(CancellationToken cancellationToken = default);
-        void Update(T entity);
-        void Remove(T entity);
+        // Get entity by Id (or null if not found).
+        Task<TEntity?> GetByIdAsync(Guid id, CancellationToken ct = default);
+
+        // Get all entities.
+        Task<IReadOnlyList<TEntity>> GetAllAsync(CancellationToken ct = default);
+
+        // Add a new entity.
+        Task AddAsync(TEntity entity, CancellationToken ct = default);
+
+        // Update an existing entity.
+        Task UpdateAsync(TEntity entity, CancellationToken ct = default);
+
+        // Delete an entity.
+        Task DeleteAsync(TEntity entity, CancellationToken ct = default);
     }
 }
+

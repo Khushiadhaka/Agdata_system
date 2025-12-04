@@ -7,45 +7,173 @@ using Xunit;
 
 namespace RewardSystem_Test.Users
 {
-    public sealed class UserTests
+    public class UserTests
     {
-        [Fact]
-        public void Ctor_Should_Create_Valid_User()
-        {
-            var user = new User("Name", "test@abc.com", "E001", UserRole.Employee);
+        // -------------------- Constructor Tests --------------------
 
-            user.Name.Should().Be("Name");
-            user.Email.Should().Be("test@abc.com");
-            user.EmployeeId.Should().Be("E001");
-            user.Role.Should().Be(UserRole.Employee);
-            user.IsDeleted.Should().BeFalse();
+        [Fact]
+        public void Constructor_ValidInputs_CreatesUserCorrectly()
+        {
+            // Act
+            var user = new User("John Doe", "john@example.com", "E123", UserRole.Admin);
+
+            // Assert
+            Assert.Equal("John Doe", user.Name);
+            Assert.Equal("john@example.com", user.Email.Value);
+            Assert.Equal("E123", user.EmployeeId.Value);
+            Assert.Equal(UserRole.Admin, user.Role);
+            Assert.False(user.IsDeleted);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("  ")]
+        public void Constructor_InvalidName_Throws(string? name)
+        {
+            Assert.Throws<ValidationException>(() =>
+                new User(name!, "a@a.com", "E1"));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("  ")]
+        public void Constructor_InvalidEmail_Throws(string? email)
+        {
+            Assert.Throws<ValidationException>(() =>
+                new User("Test", email!, "E1"));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("  ")]
+        public void Constructor_InvalidEmployeeId_Throws(string? empId)
+        {
+            Assert.Throws<ValidationException>(() =>
+                new User("Test", "a@a.com", empId!));
+        }
+
+        // -------------------- Update Tests --------------------
+
+        [Fact]
+        public void Update_ValidInputs_UpdatesUser()
+        {
+            var user = new User("Old Name", "old@mail.com", "E123");
+
+            user.Update("New Name", "new@mail.com", UserRole.Admin);
+
+            Assert.Equal("New Name", user.Name);
+            Assert.Equal("new@mail.com", user.Email.Value);
+            Assert.Equal(UserRole.Admin, user.Role);
+            Assert.NotNull(user.UpdatedAt);
         }
 
         [Fact]
-        public void Ctor_Should_Throw_When_Name_Empty()
+        public void Update_DeletedUser_Throws()
         {
-            Action act = () => new User("", "a@a.com", "E1", UserRole.Employee);
-            act.Should().Throw<ValidationException>();
-        }
-
-        [Fact]
-        public void Update_Should_Throw_When_Deleted()
-        {
-            var user = new User("Name", "a@a.com", "E1", UserRole.Employee);
+            var user = new User("John", "john@mail.com", "E1");
             user.Delete();
 
-            Action act = () => user.Update("New", "b@b.com", UserRole.Admin);
-            act.Should().Throw<BusinessRuleException>();
+            Assert.Throws<BusinessRuleException>(() =>
+                user.Update("New", "new@mail.com", UserRole.User));
         }
 
         [Fact]
-        public void AttachAccount_Should_Throw_When_UserId_Different()
+        public void Update_InvalidName_Throws()
         {
-            var user = new User("Name", "a@a.com", "E1", UserRole.Employee);
-            var account = new UserAccount(Guid.NewGuid()); // diff id
+            var user = new User("John", "john@mail.com", "E1");
+            Assert.Throws<ValidationException>(() =>
+                user.Update("", "valid@mail.com", UserRole.User));
+        }
 
-            Action act = () => user.AttachAccount(account);
-            act.Should().Throw<BusinessRuleException>();
+        [Fact]
+        public void Update_InvalidEmail_Throws()
+        {
+            var user = new User("John", "john@mail.com", "E1");
+            Assert.Throws<ValidationException>(() =>
+                user.Update("Valid", "", UserRole.User));
+        }
+
+        // -------------------- Delete Tests --------------------
+
+        [Fact]
+        public void Delete_FirstTime_MarksUserAsDeleted()
+        {
+            var user = new User("John", "john@mail.com", "E1");
+
+            user.Delete();
+
+            Assert.True(user.IsDeleted);
+            Assert.NotNull(user.UpdatedAt);
+        }
+
+        [Fact]
+        public void Delete_AlreadyDeleted_Throws()
+        {
+            var user = new User("John", "john@mail.com", "E1");
+            user.Delete();
+
+            Assert.Throws<BusinessRuleException>(() => user.Delete());
+        }
+
+        // -------------------- Attach Profile Tests --------------------
+
+        [Fact]
+        public void AttachProfile_ValidProfile_AttachesCorrectly()
+        {
+            var user = new User("John", "john@mail.com", "E1");
+            var profile = new UserProfile(user.Id, "9999999999", "Engineering", "Delhi");
+
+            user.AttachProfile(profile);
+
+            Assert.Equal(profile, user.Profile);
+        }
+
+        [Fact]
+        public void AttachProfile_Null_Throws()
+        {
+            var user = new User("John", "john@mail.com", "E1");
+            Assert.Throws<ValidationException>(() => user.AttachProfile(null!));
+        }
+
+        [Fact]
+        public void AttachProfile_WrongUserId_Throws()
+        {
+            var user = new User("John", "john@mail.com", "E1");
+            var wrongProfile = new UserProfile(Guid.NewGuid(), "999", "Dept", "Loc");
+
+            Assert.Throws<BusinessRuleException>(() => user.AttachProfile(wrongProfile));
+        }
+
+        // -------------------- Attach Account Tests --------------------
+
+        [Fact]
+        public void AttachAccount_ValidAccount_AttachesCorrectly()
+        {
+            var user = new User("John", "john@mail.com", "E1");
+            var account = new UserAccount(user.Id);
+
+            user.AttachAccount(account);
+
+            Assert.Equal(account, user.Account);
+        }
+
+        [Fact]
+        public void AttachAccount_Null_Throws()
+        {
+            var user = new User("John", "john@mail.com", "E1");
+            Assert.Throws<ValidationException>(() => user.AttachAccount(null!));
+        }
+
+        [Fact]
+        public void AttachAccount_WrongUserId_Throws()
+        {
+            var user = new User("John", "john@mail.com", "E1");
+            var wrongAccount = new UserAccount(Guid.NewGuid());
+
+            Assert.Throws<BusinessRuleException>(() => user.AttachAccount(wrongAccount));
         }
     }
 }

@@ -1,32 +1,30 @@
-﻿using Rewardsystem_Domain.Domain.Common;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
+using Rewardsystem_Domain.Domain.Common;
 
 namespace Rewardsystem_Domain.Domain.Entities.User
 {
-    // Stores additional profile information for a user
+    // Stores additional profile details for a user (phone, department, location).
     public sealed class UserProfile : BaseEntity
     {
-        // Identifier of the user
+        // Associated User ID.
         public Guid UserId { get; private set; }
 
-        // Phone number of the user
+        // Phone number (non-nullable).
         public string PhoneNumber { get; private set; } = string.Empty;
 
-        // Department of the user
+        // Department name (non-nullable).
         public string Department { get; private set; } = string.Empty;
 
-        // Location of the user
+        // Location (non-nullable).
         public string Location { get; private set; } = string.Empty;
 
-        // Navigation property to user
+        // Navigation back to user (optional).
         public User? User { get; private set; }
 
-        // Parameterless constructor for EF
+        // Parameterless constructor for EF Core.
         private UserProfile() { }
 
-        // Creates a new user profile
+        // Primary constructor with validation.
         public UserProfile(Guid userId, string phoneNumber, string department, string location)
         {
             if (userId == Guid.Empty)
@@ -47,7 +45,7 @@ namespace Rewardsystem_Domain.Domain.Entities.User
             Location = location.Trim();
         }
 
-        // Updates profile details
+        // Update profile details with validation and mark updated timestamp.
         public void Update(string phoneNumber, string department, string location)
         {
             if (string.IsNullOrWhiteSpace(phoneNumber))

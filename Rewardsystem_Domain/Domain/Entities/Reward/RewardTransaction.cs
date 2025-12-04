@@ -1,47 +1,38 @@
-﻿using Rewardsystem_Domain.Domain.Common;
+﻿using System;
+using Rewardsystem_Domain.Domain.Common;
 using Rewardsystem_Domain.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Rewardsystem_Domain.Domain.Entities.Reward
 {
-    // Represents the application of a reward to a user
+    // Represents application of a reward to a user (audit + linking to event/redemption).
     public sealed class RewardTransaction : BaseEntity
     {
-        // Identifier of the reward
+        // Identifier of the reward (source).
         public Guid RewardId { get; private set; }
 
-        // Identifier of the user receiving the reward
+        // User receiving the reward.
         public Guid UserId { get; private set; }
 
-        // Points granted as part of this reward
+        // Points granted as part of this reward.
         public int PointsGranted { get; private set; }
 
-        // External reference (e.g., transaction id)
+        // Optional external reference (e.g., vendor transaction id).
         public string Reference { get; private set; } = string.Empty;
 
-        // Type of transaction (Credit/Debit style via TransactionType)
+        // Transaction type (credit/debit style, reuse enum if appropriate).
         public TransactionType TransactionType { get; private set; }
 
-        // Optional EventInstance id link
+        // Optional link to an EventInstance (if reward came from event).
         public Guid? EventInstanceId { get; private set; }
 
-        // Optional RedemptionRequest id link
+        // Optional link to a RedemptionRequest (if reward is related to redemption).
         public Guid? RedemptionRequestId { get; private set; }
 
-        // Parameterless constructor for EF
+        // Parameterless constructor for EF Core.
         private RewardTransaction() { }
 
-        // Creates a new reward transaction
-        public RewardTransaction(
-            Guid rewardId,
-            Guid userId,
-            int pointsGranted,
-            TransactionType transactionType,
-            string? reference = null,
-            Guid? eventInstanceId = null,
-            Guid? redemptionRequestId = null)
+        // Main constructor with validation.
+        public RewardTransaction(Guid rewardId, Guid userId, int pointsGranted, TransactionType transactionType, string? reference = null, Guid? eventInstanceId = null, Guid? redemptionRequestId = null)
         {
             if (rewardId == Guid.Empty)
                 throw new ValidationException("RewardId cannot be empty.");
@@ -56,15 +47,15 @@ namespace Rewardsystem_Domain.Domain.Entities.Reward
             UserId = userId;
             PointsGranted = pointsGranted;
             TransactionType = transactionType;
-            Reference = reference?.Trim() ?? string.Empty;
+            Reference = (reference ?? string.Empty).Trim();
             EventInstanceId = eventInstanceId;
             RedemptionRequestId = redemptionRequestId;
         }
 
-        // Updates the reference
+        // Update the external reference if needed.
         public void UpdateReference(string? reference)
         {
-            Reference = reference?.Trim() ?? string.Empty;
+            Reference = (reference ?? string.Empty).Trim();
             MarkUpdated();
         }
     }

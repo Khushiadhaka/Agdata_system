@@ -1,18 +1,22 @@
-﻿using Rewardsystem_Domain.Domain.Entities.Redemption;
+﻿// Redemption record repository abstraction.
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Rewardsystem_Domain.Domain.Entities.Redemption;
 
 namespace RewardSystem_Application.Repositories
 {
-    public interface IRedemptionRecordRepository : IRepository<RedemptionRecord>
+    // Redemption record repository abstraction.
+    public interface IRedemptionRecordRepository
     {
+        Task AddAsync(RedemptionRecord record, CancellationToken ct = default);
+
+        Task<RedemptionRecord?> GetByIdAsync(Guid id, CancellationToken ct = default);
+
         Task<IReadOnlyList<RedemptionRecord>> GetByUserIdAsync(
             Guid userId,
-            CancellationToken cancellationToken = default);
-
-        Task<IReadOnlyList<RedemptionRecord>> GetByProductIdAsync(
-            Guid productId,
-            CancellationToken cancellationToken = default);
+            CancellationToken ct = default);
     }
 }
+

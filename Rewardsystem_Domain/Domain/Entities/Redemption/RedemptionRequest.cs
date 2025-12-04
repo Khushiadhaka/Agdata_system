@@ -1,30 +1,32 @@
-﻿using Rewardsystem_Domain.Domain.Common;
-using Rewardsystem_Domain.Domain.Enums;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using Rewardsystem_Domain.Domain.Common;
+using Rewardsystem_Domain.Domain.Enums;
 
 namespace Rewardsystem_Domain.Domain.Entities.Redemption
 {
-    // Represents a user's request to redeem points
+    // Represents a user's request to redeem points for a product.
     public sealed class RedemptionRequest : BaseEntity
     {
-        // Identifier of the requesting user
+        // Identifier of the requesting user.
         public Guid UserId { get; private set; }
 
-        // Identifier of the product
+        // Identifier of the product to redeem.
         public Guid ProductId { get; private set; }
 
-        // Points requested to be used
+        // Points requested to be used for redemption.
         public int PointsUsed { get; private set; }
 
-        // Current status of the request
+        // Current status of the request.
         public RedemptionStatus Status { get; private set; }
 
-        // Parameterless constructor for EF
+        // Optional admin note or reference.
+        public string Note { get; private set; } = string.Empty;
+
+        // Parameterless ctor for EF Core.
         private RedemptionRequest() { }
 
-        // Creates a new redemption request
+        // Main constructor with validation.
         public RedemptionRequest(Guid userId, Guid productId, int pointsUsed)
         {
             if (userId == Guid.Empty)
@@ -42,20 +44,20 @@ namespace Rewardsystem_Domain.Domain.Entities.Redemption
             Status = RedemptionStatus.Pending;
         }
 
-        // Updates the points requested, when pending
-        public void UpdatePoints(int pointsUsed)
+        // Update requested points (allowed only while pending).
+        public void UpdatePoints(int points)
         {
-            if (pointsUsed <= 0)
+            if (points <= 0)
                 throw new ValidationException("PointsUsed must be positive");
 
             if (Status != RedemptionStatus.Pending)
                 throw new BusinessRuleException("Points can only be updated for pending requests");
 
-            PointsUsed = pointsUsed;
+            PointsUsed = points;
             MarkUpdated();
         }
 
-        // Approves the redemption request
+        // Approve the redemption (pending -> approved).
         public void Approve()
         {
             if (Status != RedemptionStatus.Pending)
@@ -65,17 +67,18 @@ namespace Rewardsystem_Domain.Domain.Entities.Redemption
             MarkUpdated();
         }
 
-        // Rejects the redemption request
-        public void Reject()
+        // Reject the redemption (pending -> rejected).
+        public void Reject(string? reason = null)
         {
             if (Status != RedemptionStatus.Pending)
                 throw new BusinessRuleException("Only pending requests can be rejected");
 
             Status = RedemptionStatus.Rejected;
+            Note = (reason ?? string.Empty).Trim();
             MarkUpdated();
         }
 
-        // Marks as completed (after product delivered)
+        // Mark as completed after delivery (approved -> completed).
         public void MarkCompleted()
         {
             if (Status != RedemptionStatus.Approved)
@@ -85,13 +88,24 @@ namespace Rewardsystem_Domain.Domain.Entities.Redemption
             MarkUpdated();
         }
 
-        // Allowed transitions (for tests / UI)
+        // Cancel the redemption (allowed unless completed).
+        public void Cancel(string? reason = null)
+        {
+            if (Status == RedemptionStatus.Completed)
+                throw new BusinessRuleException("Completed redemptions cannot be cancelled.");
+
+            Status = RedemptionStatus.Cancelled;
+            Note = (reason ?? string.Empty).Trim();
+            MarkUpdated();
+        }
+
+        // Return allowed transitions (helpful for UI).
         public IReadOnlyCollection<RedemptionStatus> GetAllowedTransitions()
         {
             return Status switch
             {
-                RedemptionStatus.Pending => new[] { RedemptionStatus.Approved, RedemptionStatus.Rejected },
-                RedemptionStatus.Approved => new[] { RedemptionStatus.Completed },
+                RedemptionStatus.Pending => new[] { RedemptionStatus.Approved, RedemptionStatus.Rejected, RedemptionStatus.Cancelled },
+                RedemptionStatus.Approved => new[] { RedemptionStatus.Completed, RedemptionStatus.Cancelled },
                 _ => Array.Empty<RedemptionStatus>()
             };
         }

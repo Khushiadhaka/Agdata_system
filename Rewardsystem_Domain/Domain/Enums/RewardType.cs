@@ -9,6 +9,7 @@ namespace Rewardsystem_Domain.Domain.Enums
     {
         FixedPoints = 0,
         PercentageOfAmount = 1,
-        Tiered = 2
+        Tiered = 2,
+        Generic = 3
     }
 }

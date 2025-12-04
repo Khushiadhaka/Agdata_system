@@ -1,26 +1,24 @@
-﻿using Rewardsystem_Domain.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
+using Rewardsystem_Domain.Domain.Enums;
 
 namespace Rewardsystem_Domain.Domain.Entities.Transactions
 {
-    // Lightweight summary for transactions
+    // Lightweight projection for listing or reporting transactions.
     public sealed class TransactionSummary
     {
-        // Identifier of the transaction
+        // Identifier of the transaction.
         public Guid TransactionId { get; set; }
 
-        // Monetary amount
+        // Monetary amount for the transaction.
         public decimal Amount { get; set; }
 
-        // Date and time of the transaction
+        // Date/time of the transaction.
         public DateTime Date { get; set; }
 
-        // Type of the transaction
+        // Type of transaction (purchase/refund etc).
         public TransactionType Type { get; set; }
 
-        // Current status of the transaction
+        // Current transaction status.
         public TransactionStatus Status { get; set; }
     }
 }

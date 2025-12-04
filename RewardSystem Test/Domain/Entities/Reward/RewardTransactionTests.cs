@@ -44,8 +44,8 @@ namespace RewardSystem_Test.Domain.Rewards
 
             // Act
             Action act = () => new RewardTransaction(
-                Guid.Empty,      // ❌ invalid RewardId
-                userId,          // ✅ valid UserId
+                Guid.Empty,      // invalid RewardId
+                userId,          // valid UserId
                 50,
                 type
             );
@@ -63,8 +63,8 @@ namespace RewardSystem_Test.Domain.Rewards
 
             // Act
             Action act = () => new RewardTransaction(
-                rewardId,        // ✅ valid RewardId
-                Guid.Empty,      // ❌ invalid UserId
+                rewardId,        //valid RewardId
+                Guid.Empty,      // invalid UserId
                 50,
                 type
             );
@@ -85,7 +85,7 @@ namespace RewardSystem_Test.Domain.Rewards
             Action act = () => new RewardTransaction(
                 rewardId,
                 userId,
-                0,               // ❌ invalid points
+                0,               // invalid points
                 type
             );
 

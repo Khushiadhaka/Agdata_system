@@ -1,7 +1,6 @@
-﻿using Rewardsystem_Domain.Domain.Common;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// Represents a redeemable product in the catalog
+using Rewardsystem_Domain.Domain.Common;
+using Rewardsystem_Domain.Domain.ValueObjects;
 
 namespace Rewardsystem_Domain.Domain.Entities.Product
 {
@@ -20,11 +19,14 @@ namespace Rewardsystem_Domain.Domain.Entities.Product
         // Indicates if the product is active
         public bool IsActive { get; private set; }
 
+        // Optional SKU value object for the product
+        public SKU? Sku { get; private set; }
+
         // Parameterless constructor for EF
         private Product() { }
 
         // Creates a new product
-        public Product(string name, string description, int requiredPoints)
+        public Product(string name, string? description, int requiredPoints, string? sku = null)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ValidationException("Product name cannot be empty.");
@@ -36,10 +38,16 @@ namespace Rewardsystem_Domain.Domain.Entities.Product
             Description = description?.Trim() ?? string.Empty;
             RequiredPoints = requiredPoints;
             IsActive = true;
+
+           
+            if (!string.IsNullOrWhiteSpace(sku))
+            {
+                Sku = new SKU(sku.Trim());
+            }
         }
 
         // Updates product details
-        public void Update(string name, string description, int requiredPoints)
+        public void Update(string name, string? description, int requiredPoints)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ValidationException("Product name cannot be empty.");
@@ -54,6 +62,16 @@ namespace Rewardsystem_Domain.Domain.Entities.Product
             Description = description?.Trim() ?? string.Empty;
             RequiredPoints = requiredPoints;
 
+            MarkUpdated();
+        }
+
+        // Sets/changes the SKU using a raw string
+        public void SetSKU(string sku)
+        {
+            if (string.IsNullOrWhiteSpace(sku))
+                throw new ValidationException("SKU cannot be empty.");
+
+            Sku = new SKU(sku.Trim());
             MarkUpdated();
         }
 
