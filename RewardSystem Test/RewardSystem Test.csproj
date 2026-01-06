@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RewardSystem API\RewardSystem API.csproj" />
     <ProjectReference Include="..\RewardSystem_Application\RewardSystem_Application.csproj" />
     <ProjectReference Include="..\Rewardsystem_Domain\Rewardsystem_Domain.csproj" />
     <ProjectReference Include="..\RewardSystem_Infrastructure\RewardSystem_Infrastructure.csproj" />

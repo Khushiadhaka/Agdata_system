@@ -22,41 +22,6 @@ namespace RewardSystem_Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Event.Event", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTime>("ScheduledDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Events", (string)null);
-                });
-
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Event.EventDefinition", b =>
                 {
                     b.Property<Guid>("Id")
@@ -64,14 +29,12 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -89,7 +52,7 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EventDefinitions", (string)null);
+                    b.ToTable("EventDefinitions");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Event.EventInstance", b =>
@@ -99,9 +62,7 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("datetime2");
@@ -129,7 +90,9 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EventInstances", (string)null);
+                    b.HasIndex("EventDefinitionId");
+
+                    b.ToTable("EventInstances");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Event.EventRewardRule", b =>
@@ -140,13 +103,11 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.Property<string>("Condition")
                         .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("EventDefinitionId")
                         .HasColumnType("uniqueidentifier");
@@ -162,7 +123,9 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EventRewardRules", (string)null);
+                    b.HasIndex("EventDefinitionId");
+
+                    b.ToTable("EventRewardRules");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Product.Product", b =>
@@ -172,14 +135,12 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -197,7 +158,7 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Product.ProductInventory", b =>
@@ -207,14 +168,15 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ProductId1")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("StockQuantity")
@@ -225,7 +187,12 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProductInventories", (string)null);
+                    b.HasIndex("ProductId")
+                        .IsUnique();
+
+                    b.HasIndex("ProductId1");
+
+                    b.ToTable("ProductInventories");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Redemption.RedemptionProcess", b =>
@@ -235,9 +202,11 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PointsUsed")
                         .HasColumnType("int");
@@ -253,7 +222,7 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("RedemptionProcesses", (string)null);
+                    b.ToTable("RedemptionProcesses");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Redemption.RedemptionRecord", b =>
@@ -263,15 +232,17 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("RedeemedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -281,7 +252,7 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("RedemptionRecords", (string)null);
+                    b.ToTable("RedemptionRecords");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Redemption.RedemptionRequest", b =>
@@ -291,9 +262,11 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PointsUsed")
                         .HasColumnType("int");
@@ -312,7 +285,7 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("RedemptionRequests", (string)null);
+                    b.ToTable("RedemptionRequests");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Reward.PointsTransaction", b =>
@@ -322,13 +295,12 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("Points")
                         .HasColumnType("int");
@@ -344,7 +316,7 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PointsTransactions", (string)null);
+                    b.ToTable("PointsTransactions");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Reward.Reward", b =>
@@ -354,14 +326,12 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -379,7 +349,7 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Rewards", (string)null);
+                    b.ToTable("Rewards");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Reward.RewardPoints", b =>
@@ -389,9 +359,7 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("EffectiveFrom")
                         .HasColumnType("datetime2");
@@ -405,12 +373,21 @@ namespace RewardSystem_Infrastructure.Migrations
                     b.Property<Guid>("RewardId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("RewardId1")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.ToTable("RewardPoints", (string)null);
+                    b.HasIndex("RewardId");
+
+                    b.HasIndex("RewardId1")
+                        .IsUnique()
+                        .HasFilter("[RewardId1] IS NOT NULL");
+
+                    b.ToTable("RewardPoints");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Reward.RewardTransaction", b =>
@@ -420,9 +397,7 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid?>("EventInstanceId")
                         .HasColumnType("uniqueidentifier");
@@ -435,7 +410,8 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.Property<string>("Reference")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<Guid>("RewardId")
                         .HasColumnType("uniqueidentifier");
@@ -451,7 +427,7 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("RewardTransactions", (string)null);
+                    b.ToTable("RewardTransactions");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Transactions.Transaction", b =>
@@ -464,9 +440,7 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
@@ -491,7 +465,7 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Transactions", (string)null);
+                    b.ToTable("Transactions");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.User", b =>
@@ -501,19 +475,7 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("EmployeeId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -531,7 +493,7 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.UserAccount", b =>
@@ -541,9 +503,12 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("Points")
                         .HasColumnType("int");
@@ -562,7 +527,7 @@ namespace RewardSystem_Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("UserAccounts", (string)null);
+                    b.ToTable("UserAccounts");
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.UserProfile", b =>
@@ -572,9 +537,7 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -599,9 +562,127 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
-                    b.ToTable("UserProfiles", (string)null);
+                    b.ToTable("UserProfiles");
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Event.EventInstance", b =>
+                {
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.Event.EventDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("EventDefinitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Event.EventRewardRule", b =>
+                {
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.Event.EventDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("EventDefinitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Product.Product", b =>
+                {
+                    b.OwnsOne("Rewardsystem_Domain.Domain.ValueObjects.SKU", "Sku", b1 =>
+                        {
+                            b1.Property<Guid>("ProductId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("nvarchar(50)")
+                                .HasColumnName("Sku");
+
+                            b1.HasKey("ProductId");
+
+                            b1.ToTable("Products");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProductId");
+                        });
+
+                    b.Navigation("Sku");
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Product.ProductInventory", b =>
+                {
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.Product.Product", null)
+                        .WithOne()
+                        .HasForeignKey("Rewardsystem_Domain.Domain.Entities.Product.ProductInventory", "ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.Product.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId1");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Reward.RewardPoints", b =>
+                {
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.Reward.Reward", null)
+                        .WithMany()
+                        .HasForeignKey("RewardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Rewardsystem_Domain.Domain.Entities.Reward.Reward", null)
+                        .WithOne("LatestPoints")
+                        .HasForeignKey("Rewardsystem_Domain.Domain.Entities.Reward.RewardPoints", "RewardId1");
+                });
+
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.User", b =>
+                {
+                    b.OwnsOne("Rewardsystem_Domain.Domain.ValueObjects.Email", "Email", b1 =>
+                        {
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("nvarchar(200)")
+                                .HasColumnName("Email");
+
+                            b1.HasKey("UserId");
+
+                            b1.ToTable("Users");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
+                    b.OwnsOne("Rewardsystem_Domain.Domain.ValueObjects.EmployeeId", "EmployeeId", b1 =>
+                        {
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("nvarchar(50)")
+                                .HasColumnName("EmployeeId");
+
+                            b1.HasKey("UserId");
+
+                            b1.ToTable("Users");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
+                    b.Navigation("Email")
+                        .IsRequired();
+
+                    b.Navigation("EmployeeId")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.UserAccount", b =>
@@ -618,17 +699,24 @@ namespace RewardSystem_Infrastructure.Migrations
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.UserProfile", b =>
                 {
                     b.HasOne("Rewardsystem_Domain.Domain.Entities.User.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
+                        .WithOne("Profile")
+                        .HasForeignKey("Rewardsystem_Domain.Domain.Entities.User.UserProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Reward.Reward", b =>
+                {
+                    b.Navigation("LatestPoints");
+                });
+
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.User", b =>
                 {
                     b.Navigation("Account");
+
+                    b.Navigation("Profile");
                 });
 #pragma warning restore 612, 618
         }

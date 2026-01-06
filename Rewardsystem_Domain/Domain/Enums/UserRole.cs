@@ -7,8 +7,7 @@ namespace Rewardsystem_Domain.Domain.Enums
     // Role of the user in the system
     public enum UserRole
     {
-        Admin = 0,
-        Manager = 1,
-        Employee = 2
+        User = 1,    // regular employee user
+        Admin = 2    // admin user
     }
 }

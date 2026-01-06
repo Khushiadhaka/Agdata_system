@@ -1,29 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Rewardsystem_Domain.Domain.Common
 {
-    // Base class for all domain entities
+    // Base class for all domain entities (provides ID + timestamps)
     public abstract class BaseEntity
     {
-        // Unique identifier for the entity
+        // Unique identifier of the entity
         public Guid Id { get; protected set; }
 
-        // UTC creation timestamp
+        // Creation timestamp (UTC)
         public DateTime CreatedAt { get; protected set; }
 
-        // UTC last update timestamp
+        // Last updated timestamp (UTC) - nullable
         public DateTime? UpdatedAt { get; protected set; }
 
-        // Initializes base properties
+        // Default constructor sets Id and CreatedAt
         protected BaseEntity()
         {
             Id = Guid.NewGuid();
             CreatedAt = DateTime.UtcNow;
         }
 
-        // Marks entity as updated
+        // Updates the UpdatedAt timestamp
         protected void MarkUpdated()
         {
             UpdatedAt = DateTime.UtcNow;

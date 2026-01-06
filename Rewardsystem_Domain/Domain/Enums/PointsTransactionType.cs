@@ -8,6 +8,7 @@ namespace Rewardsystem_Domain.Domain.Enums
     public enum PointsTransactionType
     {
         Earn = 0,
-        Redeem = 1
+        Redeem = 1,
+        Adjust = 2
     }
 }

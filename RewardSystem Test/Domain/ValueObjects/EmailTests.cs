@@ -1,6 +1,7 @@
 ﻿using System;
 using FluentAssertions;
 using Rewardsystem_Domain.Domain.Common;
+using Rewardsystem_Domain.Domain.ValueObjects;
 using Xunit;
 
 namespace RewardSystem_Test.Domain.ValueObjects
@@ -8,32 +9,65 @@ namespace RewardSystem_Test.Domain.ValueObjects
     public class EmailTests
     {
         [Fact]
-        public void Constructor_Should_Set_Value_When_Valid()
+        public void Constructor_ValidEmail_SetsValueLowercasedAndTrimmed()
         {
-            var email = new Email("user@agdata.com");
+            // Arrange
+            var raw = "  USER@Example.COM  ";
 
-            email.Value.Should().Be("user@agdata.com");
+            // Act
+            var email = new Email(raw);
+
+            // Assert
+            Assert.Equal("user@example.com", email.Value);
+            Assert.Equal("user@example.com", email.ToString());
         }
 
         [Theory]
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public void Constructor_Should_Throw_When_Empty(string value)
+        public void Constructor_NullOrWhitespace_ThrowsValidationException(string? value)
         {
-            Action act = () => new Email(value);
-
-            act.Should().Throw<ValidationException>();
+            // Act + Assert
+            Assert.Throws<ValidationException>(() => new Email(value!));
         }
 
         [Fact]
-        public void Equality_Should_Be_Based_On_Value()
+        public void Equality_SameValue_IsEqual()
         {
-            var e1 = new Email("user@agdata.com");
-            var e2 = new Email("user@agdata.com");
+            // Arrange
+            var e1 = new Email("user@example.com");
+            var e2 = new Email("USER@EXAMPLE.COM"); 
 
-            e1.Equals(e2).Should().BeTrue();
-            e1.GetHashCode().Should().Be(e2.GetHashCode());
+            // Act + Assert
+            Assert.Equal(e1, e2);
+            Assert.True(e1.Equals(e2));
+            Assert.Equal(e1.GetHashCode(), e2.GetHashCode());
+        }
+
+        [Fact]
+        public void Equality_DifferentValue_IsNotEqual()
+        {
+            // Arrange
+            var e1 = new Email("user1@example.com");
+            var e2 = new Email("user2@example.com");
+
+            // Act + Assert
+            Assert.NotEqual(e1, e2);
+            Assert.False(e1.Equals(e2));
+        }
+
+        [Fact]
+        public void ImplicitConversion_ReturnsUnderlyingString()
+        {
+            // Arrange
+            var email = new Email("user@example.com");
+
+            // Act
+            string value = email; // implicit operator
+
+            // Assert
+            Assert.Equal("user@example.com", value);
         }
     }
 }

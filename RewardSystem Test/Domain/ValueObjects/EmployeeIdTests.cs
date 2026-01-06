@@ -1,7 +1,7 @@
-﻿using System;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Rewardsystem_Domain.Domain.Common;
-
+using Rewardsystem_Domain.Domain.ValueObjects;
+using System;
 using Xunit;
 
 namespace RewardSystem_Test.Domain.ValueObjects
@@ -9,32 +9,77 @@ namespace RewardSystem_Test.Domain.ValueObjects
     public class EmployeeIdTests
     {
         [Fact]
-        public void Constructor_Should_Set_Value_When_Valid()
+        public void Constructor_ValidValue_SetsValueTrimmed()
         {
-            var id = new EmployeeId("EMP123");
+            // Arrange
+            var raw = "  EMP-123  ";
 
-            id.Value.Should().Be("EMP123");
+            // Act
+            var id = new EmployeeId(raw);
+
+            // Assert
+            Assert.Equal("EMP-123", id.Value);
         }
 
         [Theory]
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public void Constructor_Should_Throw_When_Empty(string value)
+        public void Constructor_NullOrWhitespace_ThrowsValidationException(string? value)
         {
-            Action act = () => new EmployeeId(value);
-
-            act.Should().Throw<ValidationException>();
+            // Act + Assert
+            Assert.Throws<ValidationException>(() => new EmployeeId(value!));
         }
 
         [Fact]
-        public void Equality_Should_Use_Value()
+        public void Equality_SameValue_AreEqual()
         {
-            var e1 = new EmployeeId("EMP1");
-            var e2 = new EmployeeId("EMP1");
+            // Arrange
+            var id1 = new EmployeeId("EMP-001");
+            var id2 = new EmployeeId("EMP-001");
 
-            e1.Equals(e2).Should().BeTrue();
-            e1.GetHashCode().Should().Be(e2.GetHashCode());
+            // Act + Assert
+            Assert.Equal(id1, id2);
+            Assert.True(id1.Equals(id2));
+            Assert.Equal(id1.GetHashCode(), id2.GetHashCode());
+        }
+
+        [Fact]
+        public void Equality_DifferentValue_AreNotEqual()
+        {
+            // Arrange
+            var id1 = new EmployeeId("EMP-001");
+            var id2 = new EmployeeId("EMP-002");
+
+            // Act + Assert
+            Assert.NotEqual(id1, id2);
+            Assert.False(id1.Equals(id2));
+        }
+
+        [Fact]
+        public void ImplicitConversion_ReturnsValueString()
+        {
+            // Arrange
+            var id = new EmployeeId("EMP-999");
+
+            // Act
+            string str = id; // implicit operator
+
+            // Assert
+            Assert.Equal("EMP-999", str);
+        }
+
+        [Fact]
+        public void ToString_ReturnsUnderlyingValue()
+        {
+            // Arrange
+            var id = new EmployeeId("EMP-XYZ");
+
+            // Act
+            var result = id.ToString();
+
+            // Assert
+            Assert.Equal("EMP-XYZ", result);
         }
     }
 }

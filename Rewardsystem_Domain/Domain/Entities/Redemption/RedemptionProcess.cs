@@ -1,27 +1,28 @@
-﻿using Rewardsystem_Domain.Domain.Common;
+﻿using System;
+using Rewardsystem_Domain.Domain.Common;
 using Rewardsystem_Domain.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Rewardsystem_Domain.Domain.Entities.Redemption
 {
-    // Manages lifecycle of a redemption operation
+    // Represents lifecycle and status of a redemption operation (separate from request).
     public sealed class RedemptionProcess : BaseEntity
     {
-        // Business identifier of the redemption
+        // Business identifier of the redemption (could match a domain-level id).
         public Guid RedemptionId { get; private set; }
 
-        // Points used in the redemption
+        // Points used in the redemption operation.
         public int PointsUsed { get; private set; }
 
-        // Current status of the process
+        // Current status of the process (tracks flow independently).
         public RedemptionStatus Status { get; private set; }
 
-        // Parameterless constructor for EF
+        // Optional note for operator/admin.
+        public string Note { get; private set; } = string.Empty;
+
+        // Parameterless ctor for EF Core.
         private RedemptionProcess() { }
 
-        // Creates a new redemption process
+        // Main constructor with validation.
         public RedemptionProcess(Guid redemptionId, int pointsUsed)
         {
             if (redemptionId == Guid.Empty)
@@ -35,7 +36,7 @@ namespace Rewardsystem_Domain.Domain.Entities.Redemption
             Status = RedemptionStatus.Pending;
         }
 
-        // Approves the redemption
+        // Approve the process (pending -> approved).
         public void Approve()
         {
             if (Status != RedemptionStatus.Pending)
@@ -45,17 +46,18 @@ namespace Rewardsystem_Domain.Domain.Entities.Redemption
             MarkUpdated();
         }
 
-        // Rejects the redemption
-        public void Reject()
+        // Reject the process (pending -> rejected).
+        public void Reject(string? reason = null)
         {
             if (Status != RedemptionStatus.Pending)
                 throw new BusinessRuleException("Only pending requests can be rejected.");
 
             Status = RedemptionStatus.Rejected;
+            Note = (reason ?? string.Empty).Trim();
             MarkUpdated();
         }
 
-        // Marks redemption as completed
+        // Mark process as completed (approved -> completed).
         public void MarkCompleted()
         {
             if (Status != RedemptionStatus.Approved)
@@ -65,13 +67,14 @@ namespace Rewardsystem_Domain.Domain.Entities.Redemption
             MarkUpdated();
         }
 
-        // Cancels the redemption
-        public void Cancel()
+        // Cancel the process (cannot cancel completed).
+        public void Cancel(string? reason = null)
         {
             if (Status == RedemptionStatus.Completed)
                 throw new BusinessRuleException("Completed redemptions cannot be cancelled.");
 
             Status = RedemptionStatus.Cancelled;
+            Note = (reason ?? string.Empty).Trim();
             MarkUpdated();
         }
     }

@@ -1,39 +1,37 @@
-﻿using Rewardsystem_Domain.Domain.Common;
+﻿using System;
+using Rewardsystem_Domain.Domain.Common;
 using Rewardsystem_Domain.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Rewardsystem_Domain.Domain.Entities.Transactions
 {
-    // Represents a generic business transaction
+    // Represents a business transaction that may produce reward points.
     public sealed class Transaction : BaseEntity
     {
-        // Identifier of the user
+        // Identifier of the user who performed the transaction.
         public Guid UserId { get; private set; }
 
-        // Optional identifier of the product
+        // Optional product associated with the transaction.
         public Guid? ProductId { get; private set; }
 
-        // Monetary amount of the transaction
+        // Monetary amount of the transaction.
         public decimal Amount { get; private set; }
 
-        // Reward points earned in the transaction
+        // Reward points earned as part of this transaction.
         public int RewardPointsEarned { get; private set; }
 
-        // Type of the transaction
+        // Type of the transaction (purchase, refund, etc).
         public TransactionType Type { get; private set; }
 
-        // Current status of the transaction
+        // Current status of the transaction (Pending, Completed, Failed).
         public TransactionStatus Status { get; private set; }
 
-        // Date and time of the transaction
+        // Date/time when the transaction occurred.
         public DateTime Date { get; private set; }
 
-        // Parameterless constructor for EF
+        // Parameterless constructor for EF Core.
         private Transaction() { }
 
-        // Creates a new transaction
+        // Main constructor with validation.
         public Transaction(Guid userId, Guid? productId, decimal amount, int rewardPointsEarned, TransactionType type)
         {
             if (userId == Guid.Empty)
@@ -54,7 +52,7 @@ namespace Rewardsystem_Domain.Domain.Entities.Transactions
             Date = DateTime.UtcNow;
         }
 
-        // Marks transaction as completed
+        // Mark the transaction as completed (idempotent guard included).
         public void MarkCompleted()
         {
             if (Status == TransactionStatus.Completed)
@@ -64,7 +62,7 @@ namespace Rewardsystem_Domain.Domain.Entities.Transactions
             MarkUpdated();
         }
 
-        // Marks transaction as failed
+        // Mark the transaction as failed.
         public void MarkFailed()
         {
             if (Status == TransactionStatus.Completed)
@@ -74,7 +72,7 @@ namespace Rewardsystem_Domain.Domain.Entities.Transactions
             MarkUpdated();
         }
 
-        // Updates transaction details
+        // Update transaction details before completion (amount and points).
         public void Update(decimal amount, int rewardPointsEarned, TransactionType type)
         {
             if (amount <= 0)
@@ -83,12 +81,13 @@ namespace Rewardsystem_Domain.Domain.Entities.Transactions
             if (rewardPointsEarned < 0)
                 throw new ValidationException("Reward points cannot be negative.");
 
+            if (Status == TransactionStatus.Completed)
+                throw new BusinessRuleException("Completed transaction cannot be modified.");
+
             Amount = amount;
             RewardPointsEarned = rewardPointsEarned;
             Type = type;
-
             MarkUpdated();
         }
     }
-
 }

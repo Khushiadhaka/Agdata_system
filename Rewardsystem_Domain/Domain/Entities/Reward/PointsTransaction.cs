@@ -1,30 +1,28 @@
-﻿using Rewardsystem_Domain.Domain.Common;
+﻿using System;
+using Rewardsystem_Domain.Domain.Common;
 using Rewardsystem_Domain.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Rewardsystem_Domain.Domain.Entities.Reward
 {
-    // Represents a points movement (earn or redeem) for audit history
+    // Represents a movement of points (earn or redeem) for audit/history.
     public sealed class PointsTransaction : BaseEntity
     {
-        // ID of the user receiving or spending points
+        // User who earned or redeemed points.
         public Guid UserId { get; private set; }
 
-        // Points earned or redeemed (always positive)
+        // Number of points moved (always positive).
         public int Points { get; private set; }
 
-        // Type of points transaction (Earn / Redeem)
+        // Type of the points transaction (Earn / Redeem).
         public PointsTransactionType Type { get; private set; }
 
-        // Optional description
+        // Optional free-text description.
         public string Description { get; private set; } = string.Empty;
 
-        // Parameterless constructor for EF / serializers
+        // Parameterless constructor for EF Core.
         private PointsTransaction() { }
 
-        // Create a new points transaction with validation
+        // Main constructor with validation.
         public PointsTransaction(Guid userId, int points, PointsTransactionType type, string? description = null)
         {
             if (userId == Guid.Empty)
@@ -36,13 +34,13 @@ namespace Rewardsystem_Domain.Domain.Entities.Reward
             UserId = userId;
             Points = points;
             Type = type;
-            Description = description?.Trim() ?? string.Empty;
+            Description = (description ?? string.Empty).Trim();
         }
 
-        // Update description and mark as updated
+        // Update description if needed.
         public void UpdateDescription(string? description)
         {
-            Description = description?.Trim() ?? string.Empty;
+            Description = (description ?? string.Empty).Trim();
             MarkUpdated();
         }
     }

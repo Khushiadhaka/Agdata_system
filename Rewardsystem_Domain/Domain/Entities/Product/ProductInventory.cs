@@ -1,69 +1,70 @@
-﻿using Rewardsystem_Domain.Domain.Common;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
+using Rewardsystem_Domain.Domain.Common;
 
 namespace Rewardsystem_Domain.Domain.Entities.Product
 {
-    // Tracks stock quantity for a product
+    // Tracks stock quantity for a product.
     public sealed class ProductInventory : BaseEntity
     {
-        // Identifier of the product
+        // Identifier of the product this inventory belongs to.
         public Guid ProductId { get; private set; }
 
-        // Current stock quantity
+        // Current stock quantity (non-negative).
         public int StockQuantity { get; private set; }
 
-        // Indicates whether inventory is active
-        public bool IsActive { get; private set; }
+        // Whether inventory tracking is active.
+        public bool IsActive { get; private set; } = true;
 
-        // Parameterless constructor for EF
+        // Navigation: Product reference (may be null until attached).
+        public Product? Product { get; private set; }
+
+        // Parameterless constructor for EF Core.
         private ProductInventory() { }
 
-        // Creates a new product inventory record
-        public ProductInventory(Guid productId, int stockQuantity)
+        // Main constructor with validation.
+        public ProductInventory(Guid productId, int initialStock)
         {
             if (productId == Guid.Empty)
                 throw new ValidationException("ProductId cannot be empty.");
 
-            if (stockQuantity < 0)
-                throw new ValidationException("Stock quantity cannot be negative.");
+            if (initialStock < 0)
+                throw new ValidationException("Initial stock cannot be negative.");
 
             ProductId = productId;
-            StockQuantity = stockQuantity;
+            StockQuantity = initialStock;
             IsActive = true;
         }
 
-        // Increases stock quantity
+        // Increase stock by positive quantity.
         public void IncreaseStock(int quantity)
         {
             if (quantity <= 0)
-                throw new ValidationException("Quantity must be greater than zero.");
+                throw new ValidationException("Quantity to increase must be greater than zero.");
 
             if (!IsActive)
-                throw new BusinessRuleException("Cannot modify inventory of inactive product.");
+                throw new BusinessRuleException("Cannot modify inventory of an inactive product.");
 
             StockQuantity += quantity;
             MarkUpdated();
         }
 
-        // Reduces stock quantity
+        // Reduce stock by positive quantity.
         public void ReduceStock(int quantity)
         {
             if (quantity <= 0)
-                throw new ValidationException("Quantity must be greater than zero.");
+                throw new ValidationException("Quantity to reduce must be greater than zero.");
 
             if (!IsActive)
-                throw new BusinessRuleException("Cannot modify inventory of inactive product.");
+                throw new BusinessRuleException("Cannot modify inventory of an inactive product.");
 
             if (quantity > StockQuantity)
-                throw new BusinessRuleException("Insufficient stock to reduce.");
+                throw new BusinessRuleException("Insufficient stock to reduce the requested quantity.");
 
             StockQuantity -= quantity;
             MarkUpdated();
         }
 
-        // Deactivates the inventory record
+        // Deactivate inventory tracking (prevent further stock changes).
         public void Deactivate()
         {
             if (!IsActive)
@@ -73,13 +74,26 @@ namespace Rewardsystem_Domain.Domain.Entities.Product
             MarkUpdated();
         }
 
-        // Reactivates the inventory record
+        // Reactivate inventory tracking.
         public void Activate()
         {
             if (IsActive)
                 throw new BusinessRuleException("Inventory is already active.");
 
             IsActive = true;
+            MarkUpdated();
+        }
+
+        // Attach the product navigation property (for convenience).
+        public void AttachProduct(Product product)
+        {
+            if (product == null)
+                throw new ValidationException("Product cannot be null.");
+
+            if (product.Id != ProductId)
+                throw new BusinessRuleException("Product does not match Inventory.ProductId.");
+
+            Product = product;
             MarkUpdated();
         }
     }

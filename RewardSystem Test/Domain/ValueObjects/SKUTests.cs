@@ -1,40 +1,85 @@
-﻿using System;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Rewardsystem_Domain.Domain.Common;
-
+using Rewardsystem_Domain.Domain.ValueObjects;
+using System;
 using Xunit;
 
 namespace RewardSystem_Test.Domain.ValueObjects
 {
-    public class SKUTests
+    public class SkuTests
     {
         [Fact]
-        public void Constructor_Should_Set_Value_When_Valid()
+        public void Constructor_ValidValue_SetsValueTrimmed()
         {
-            var sku = new SKU("PROD-1");
+            // Arrange
+            var raw = "  ABC-123  ";
 
-            sku.Value.Should().Be("PROD-1");
+            // Act
+            var sku = new SKU(raw);
+
+            // Assert
+            Assert.Equal("ABC-123", sku.Value);
         }
 
         [Theory]
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        public void Constructor_Should_Throw_When_Empty(string value)
+        public void Constructor_NullOrWhitespace_ThrowsValidationException(string? value)
         {
-            Action act = () => new SKU(value);
-
-            act.Should().Throw<ValidationException>();
+            // Act + Assert
+            Assert.Throws<ValidationException>(() => new SKU(value!));
         }
 
         [Fact]
-        public void Equality_Should_Use_Value()
+        public void Equality_SameValue_AreEqual()
         {
-            var s1 = new SKU("ABC-123");
-            var s2 = new SKU("ABC-123");
+            // Arrange
+            var sku1 = new SKU("ITEM-001");
+            var sku2 = new SKU("ITEM-001");
 
-            s1.Equals(s2).Should().BeTrue();
-            s1.GetHashCode().Should().Be(s2.GetHashCode());
+            // Act + Assert
+            Assert.Equal(sku1, sku2);
+            Assert.True(sku1.Equals(sku2));
+            Assert.Equal(sku1.GetHashCode(), sku2.GetHashCode());
+        }
+
+        [Fact]
+        public void Equality_DifferentValue_AreNotEqual()
+        {
+            // Arrange
+            var sku1 = new SKU("ITEM-001");
+            var sku2 = new SKU("ITEM-002");
+
+            // Act + Assert
+            Assert.NotEqual(sku1, sku2);
+            Assert.False(sku1.Equals(sku2));
+        }
+
+        [Fact]
+        public void ImplicitConversion_ToString_ReturnsUnderlyingValue()
+        {
+            // Arrange
+            var sku = new SKU("SKU-999");
+
+            // Act
+            string str = sku;   // uses implicit operator
+
+            // Assert
+            Assert.Equal("SKU-999", str);
+        }
+
+        [Fact]
+        public void ToString_ReturnsValue()
+        {
+            // Arrange
+            var sku = new SKU("SKU-XYZ");
+
+            // Act
+            var result = sku.ToString();
+
+            // Assert
+            Assert.Equal("SKU-XYZ", result);
         }
     }
 }
