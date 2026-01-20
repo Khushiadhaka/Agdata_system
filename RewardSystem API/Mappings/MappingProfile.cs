@@ -15,103 +15,87 @@ using Rewardsystem_Domain.Domain.Entities.Transactions;
 
 namespace RewardSystem_API.Mappings
 {
-    // Central AutoMapper profile configuring mappings between Domain entities and DTOs.
-    public sealed class MappingProfile : Profile
-    {
-        // Configure all mappings in constructor.
-        public MappingProfile()
-        {
-            MapUser();
-            MapProduct();
-            MapReward();
-            MapRedemption();
-            MapEvent();
-            MapTransaction();
-        }
+	/// <summary>
+	/// Central AutoMapper profile configuring mappings between Domain entities and DTOs.
+	/// </summary>
+	public sealed class MappingProfile : Profile
+	{
+		public MappingProfile()
+		{
+			MapUser();
+			MapProduct();
+			MapReward();
+			MapRedemption();
+			MapEvent();
+			MapTransaction();
+		}
 
-        // Configure mappings for User related DTOs.
-        private void MapUser()
-        {
-            // User → UserDto (Email / EmployeeId from value objects).
-            CreateMap<User, UserDto>()
-                .ForMember(d => d.Email, opt => opt.MapFrom(s => s.Email.Value))
-                .ForMember(d => d.EmployeeId, opt => opt.MapFrom(s => s.EmployeeId.Value))
-                .ForMember(d => d.Role, opt => opt.MapFrom(s => s.Role.ToString()));
+		// ---------------- USER ----------------
+		private void MapUser()
+		{
+			CreateMap<User, UserDto>()
+				.ForMember(d => d.Email, opt => opt.MapFrom(s => s.Email.Value))
+				.ForMember(d => d.EmployeeId, opt => opt.MapFrom(s => s.EmployeeId.Value))
+				.ForMember(d => d.Role, opt => opt.MapFrom(s => s.Role.ToString()));
 
-            // UserProfile → UserProfileDto.
-            CreateMap<UserProfile, UserProfileDto>();
+			CreateMap<UserProfile, UserProfileDto>();
 
-            // UserAccount → UserAccountDto.
-            CreateMap<UserAccount, UserAccountDto>()
-                .ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status.ToString()));
+			CreateMap<UserAccount, UserAccountDto>()
+				.ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status.ToString()));
 
-            // Auth: Domain User → AuthResponseDto (only properties that actually exist on AuthResponseDto).
-            // We keep it simple so it compiles regardless of the AuthResponseDto shape.
-            CreateMap<User, AuthResponseDto>();
-        }
+			// ❌ Removed unsafe AuthResponseDto mapping
+		}
 
-        // Configure mappings for Product + Inventory.
-        private void MapProduct()
-        {
-            // Product → ProductDto.
-            CreateMap<Product, ProductDto>();
+		// ---------------- PRODUCT ----------------
+		private void MapProduct()
+		{
+			CreateMap<Product, ProductDto>()
+				.ForMember(
+					d => d.SKU,
+					opt => opt.MapFrom(s => s.Sku != null ? s.Sku.Value : null)
+				);
 
-            // ProductInventory → ProductInventoryDto.
-            CreateMap<ProductInventory, ProductInventoryDto>();
-        }
+			CreateMap<ProductInventory, ProductInventoryDto>();
+		}
 
-        // Configure mappings for Reward module.
-        private void MapReward()
-        {
-            // Reward → RewardDto.
-            CreateMap<Reward, RewardDto>()
-                .ForMember(d => d.Type, opt => opt.MapFrom(s => s.Type.ToString()));
+		// ---------------- REWARD ----------------
+		private void MapReward()
+		{
+			CreateMap<Reward, RewardDto>()
+				.ForMember(d => d.Type, opt => opt.MapFrom(s => s.Type.ToString()));
 
-            // RewardPoints → RewardPointsDto.
-            CreateMap<RewardPoints, RewardPointsDto>();
+			CreateMap<RewardPoints, RewardPointsDto>();
 
-            // RewardTransaction → RewardTransactionDto.
-            CreateMap<RewardTransaction, RewardTransactionDto>()
-                .ForMember(d => d.TransactionType, opt => opt.MapFrom(s => s.TransactionType.ToString()));
+			CreateMap<RewardTransaction, RewardTransactionDto>()
+				.ForMember(d => d.TransactionType, opt => opt.MapFrom(s => s.TransactionType.ToString()));
+		}
 
-            // Custom for Top3EmployeeRewardDto will usually be from SQL projection (manual mapping).
-        }
+		// ---------------- REDEMPTION ----------------
+		private void MapRedemption()
+		{
+			CreateMap<RedemptionRequest, RedemptionRequestDto>()
+				.ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status.ToString()));
 
-        // Configure mappings for Redemption module.
-        private void MapRedemption()
-        {
-            // RedemptionRequest → RedemptionRequestDto.
-            CreateMap<RedemptionRequest, RedemptionRequestDto>()
-                .ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status.ToString()));
+			CreateMap<RedemptionRecord, RedemptionRecordDto>();
 
-            // RedemptionRecord → RedemptionRecordDto.
-            CreateMap<RedemptionRecord, RedemptionRecordDto>();
+			CreateMap<RedemptionProcess, RedemptionProcessDto>()
+				.ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status.ToString()));
+		}
 
-            // RedemptionProcess → RedemptionProcessDto.
-            CreateMap<RedemptionProcess, RedemptionProcessDto>()
-                .ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status.ToString()));
-        }
+		// ---------------- EVENT ----------------
+		private void MapEvent()
+		{
+			CreateMap<EventDefinition, EventDefinitionDto>();
+			CreateMap<EventInstance, EventInstanceDto>();
+			CreateMap<EventRewardRule, EventRewardRuleDto>();
+		}
 
-        // Configure mappings for Event module.
-        private void MapEvent()
-        {
-            // EventDefinition → EventDefinitionDto.
-            CreateMap<EventDefinition, EventDefinitionDto>();
-
-            // EventInstance → EventInstanceDto.
-            CreateMap<EventInstance, EventInstanceDto>();
-
-            // EventRewardRule → EventRewardRuleDto.
-            CreateMap<EventRewardRule, EventRewardRuleDto>();
-        }
-
-        // Configure mappings for Transaction module.
-        private void MapTransaction()
-        {
-            // Transaction → TransactionDto.
-            CreateMap<Transaction, TransactionDto>()
-                .ForMember(d => d.Type, opt => opt.MapFrom(s => s.Type.ToString()))
-                .ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status.ToString()));
-        }
-    }
+		// ---------------- TRANSACTION ----------------
+		private void MapTransaction()
+		{
+			CreateMap<Transaction, TransactionDto>()
+				.ForMember(d => d.Type, opt => opt.MapFrom(s => s.Type.ToString()))
+				.ForMember(d => d.Status, opt => opt.MapFrom(s => s.Status.ToString()));
+		}
+	}
 }

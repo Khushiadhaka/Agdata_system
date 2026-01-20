@@ -1,95 +1,126 @@
 ﻿using AutoMapper;
 using RewardSystem_API.DTOs.Event;
 using RewardSystem_Application.Interfaces.Event;
-
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RewardSystem_API.Services
 {
-    /// <summary>
-    /// Contract used by EventController.
-    /// </summary>
-    public interface IEventApiService
-    {
-        // ---------- Event Definitions ----------
+	/// <summary>
+	/// API-level service that wires EventController to Application services.
+	/// </summary>
+	public sealed class EventApiService : IEventApiService
+	{
+		private readonly IEventDefinitionService _definitionService;
+		private readonly IEventInstanceService _instanceService;
+		private readonly IEventRewardRuleService _ruleService;
+		private readonly IMapper _mapper;
 
-        Task<EventDefinitionDto?> GetDefinitionByIdAsync(
-            Guid id,
-            CancellationToken cancellationToken = default);
+		public EventApiService(
+			IEventDefinitionService definitionService,
+			IEventInstanceService instanceService,
+			IEventRewardRuleService ruleService,
+			IMapper mapper)
+		{
+			_definitionService = definitionService;
+			_instanceService = instanceService;
+			_ruleService = ruleService;
+			_mapper = mapper;
+		}
 
-        Task<IReadOnlyList<EventDefinitionDto>> ListDefinitionsAsync(
-            CancellationToken cancellationToken = default);
+		// ================= EVENT DEFINITIONS =================
 
-        Task<EventDefinitionDto> CreateDefinitionAsync(
-            EventDefinitionCreateDto dto,
-            CancellationToken cancellationToken = default);
+		public async Task<EventDefinitionDto?> GetDefinitionByIdAsync(
+			Guid id,
+			CancellationToken cancellationToken = default)
+		{
+			var def = await _definitionService.GetByIdAsync(id, cancellationToken);
+			return def == null ? null : _mapper.Map<EventDefinitionDto>(def);
+		}
 
-        Task<EventDefinitionDto?> UpdateDefinitionAsync(
-            Guid id,
-            EventDefinitionUpdateDto dto,
-            CancellationToken cancellationToken = default);
+		public async Task<IReadOnlyList<EventDefinitionDto>> ListDefinitionsAsync(
+			CancellationToken cancellationToken = default)
+		{
+			var list = await _definitionService.ListAsync(false, cancellationToken);
+			return _mapper.Map<IReadOnlyList<EventDefinitionDto>>(list);
+		}
 
-        // ---------- Event Instances ----------
+		public async Task<EventDefinitionDto> CreateDefinitionAsync(
+			EventDefinitionCreateDto dto,
+			CancellationToken cancellationToken = default)
+		{
+			var def = await _definitionService.CreateAsync(
+				dto.Name,
+				dto.Description,
+				dto.RewardPoints,
+				cancellationToken);
 
-        Task<EventInstanceDto> CreateInstanceAsync(
-            EventInstanceCreateDto dto,
-            CancellationToken cancellationToken = default);
+			return _mapper.Map<EventDefinitionDto>(def);
+		}
 
-        Task<IReadOnlyList<EventInstanceDto>> ListInstancesAsync(
-            CancellationToken cancellationToken = default);
+		public async Task<EventDefinitionDto?> UpdateDefinitionAsync(
+			Guid id,
+			EventDefinitionUpdateDto dto,
+			CancellationToken cancellationToken = default)
+		{
+			var def = await _definitionService.UpdateAsync(
+				id,
+				dto.Name,
+				dto.Description,
+				dto.RewardPoints,
+				cancellationToken);
 
-        // ---------- Reward Rules ----------
+			return _mapper.Map<EventDefinitionDto>(def);
+		}
 
-        Task<EventRewardRuleDto> CreateRewardRuleAsync(
-            EventRewardRuleCreateDto dto,
-            CancellationToken cancellationToken = default);
+		// ================= EVENT INSTANCES =================
 
-        Task<IReadOnlyList<EventRewardRuleDto>> ListRewardRulesAsync(
-            Guid eventDefinitionId,
-            CancellationToken cancellationToken = default);
-    }
+		public async Task<EventInstanceDto> CreateInstanceAsync(
+			EventInstanceCreateDto dto,
+			CancellationToken cancellationToken = default)
+		{
+			var instance = await _instanceService.CreateAsync(
+				dto.EventDefinitionId,
+				dto.StartTime,
+				dto.EndTime,
+				cancellationToken);
 
-    /// <summary>
-    /// Simple stub implementation – wire to Application layer later.
-    /// </summary>
-    public sealed class EventApiService : IEventApiService
-    {
-        public Task<EventDefinitionDto?> GetDefinitionByIdAsync(
-            Guid id,
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
+			return _mapper.Map<EventInstanceDto>(instance);
+		}
 
-        public Task<IReadOnlyList<EventDefinitionDto>> ListDefinitionsAsync(
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
+		public Task<IReadOnlyList<EventInstanceDto>> ListInstancesAsync(
+			CancellationToken cancellationToken = default)
+		{
+			throw new NotImplementedException(
+				"Global instance listing not supported yet.");
+		}
 
-        public Task<EventDefinitionDto> CreateDefinitionAsync(
-            EventDefinitionCreateDto dto,
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
+		// ================= REWARD RULES =================
 
-        public Task<EventDefinitionDto?> UpdateDefinitionAsync(
-            Guid id,
-            EventDefinitionUpdateDto dto,
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
+		public async Task<EventRewardRuleDto> CreateRewardRuleAsync(
+			EventRewardRuleCreateDto dto,
+			CancellationToken cancellationToken = default)
+		{
+			var rule = await _ruleService.CreateAsync(
+				dto.EventDefinitionId,
+				dto.Condition,
+				dto.Points,
+				cancellationToken);
 
-        public Task<EventInstanceDto> CreateInstanceAsync(
-            EventInstanceCreateDto dto,
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
+			return _mapper.Map<EventRewardRuleDto>(rule);
+		}
 
-        public Task<IReadOnlyList<EventInstanceDto>> ListInstancesAsync(
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
+		public async Task<IReadOnlyList<EventRewardRuleDto>> ListRewardRulesAsync(
+			Guid eventDefinitionId,
+			CancellationToken cancellationToken = default)
+		{
+			var rules = await _ruleService.GetByDefinitionAsync(
+				eventDefinitionId,
+				cancellationToken);
 
-        public Task<EventRewardRuleDto> CreateRewardRuleAsync(
-            EventRewardRuleCreateDto dto,
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
-
-        public Task<IReadOnlyList<EventRewardRuleDto>> ListRewardRulesAsync(
-            Guid eventDefinitionId,
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
-    }
+			return _mapper.Map<IReadOnlyList<EventRewardRuleDto>>(rules);
+		}
+	}
 }

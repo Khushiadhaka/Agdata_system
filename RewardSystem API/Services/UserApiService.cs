@@ -1,146 +1,146 @@
 ﻿using AutoMapper;
 using RewardSystem_API.DTOs.User;
 using RewardSystem_Application.Interfaces.Users;
-
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RewardSystem_API.Services
 {
-    /// <summary>
-    /// API-level service used by <see cref="Controllers.UsersController"/> to
-    /// work with users, profiles and accounts.
-    /// 
-    /// NOTE:
-    /// Right now this class only contains stub / placeholder implementations
-    /// so that the project compiles. You can later replace the bodies with
-    /// real calls to your application layer / repositories.
-    /// </summary>
-    public sealed class UserApiService : IUserApiService
-    {
-        
-        // 1. Users
-        
+	/// <summary>
+	/// API-level service used by UsersController.
+	/// This class orchestrates application services and maps domain → DTO.
+	/// </summary>
+	public sealed class UserApiService : IUserApiService
+	{
+		private readonly IUserService _userService;
+		private readonly IUserProfileService _profileService;
+		private readonly IUserAccountService _accountService;
+		private readonly IMapper _mapper;
 
-        /// <summary>
-        /// Returns a list of users.
-        /// Currently returns an empty list (stub).
-        /// </summary>
-        public Task<IReadOnlyList<UserDto>> ListAsync(
-            CancellationToken cancellationToken = default)
-        {
-            
-            IReadOnlyList<UserDto> empty = Array.Empty<UserDto>();
-            return Task.FromResult(empty);
-        }
+		public UserApiService(
+			IUserService userService,
+			IUserProfileService profileService,
+			IUserAccountService accountService,
+			IMapper mapper)
+		{
+			_userService = userService;
+			_profileService = profileService;
+			_accountService = accountService;
+			_mapper = mapper;
+		}
 
-        /// <summary>
-        /// Returns a single user by id.
-        /// Currently always returns null (stub).
-        /// </summary>
-        public Task<UserDto?> GetByIdAsync(
-            Guid id,
-            CancellationToken cancellationToken = default)
-        {
-            
-            return Task.FromResult<UserDto?>(null);
-        }
+		// ---------------- USERS ----------------
 
-        /// <summary>
-        /// Creates a new user.
-        /// Currently throws NotImplementedException (stub).
-        /// </summary>
-        public Task<UserDto> CreateAsync(
-            UserCreateDto dto,
-            CancellationToken cancellationToken = default)
-        {
-            
-            throw new NotImplementedException(
-                "UserApiService.CreateAsync is not wired yet. " +
-                "Call your application services / repositories here.");
-        }
+		public async Task<IReadOnlyList<UserDto>> ListAsync(CancellationToken ct = default)
+		{
+			var users = await _userService.GetAllAsync(ct);
+			return _mapper.Map<IReadOnlyList<UserDto>>(users);
+		}
 
-        /// <summary>
-        /// Updates an existing user.
-        /// Currently throws NotImplementedException (stub).
-        /// </summary>
-        public Task<UserDto?> UpdateAsync(
-            Guid id,
-            UserUpdateDto dto,
-            CancellationToken cancellationToken = default)
-        {
-            // TODO: Replace with real implementation
-            throw new NotImplementedException(
-                "UserApiService.UpdateAsync is not wired yet.");
-        }
+		public async Task<UserDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
+		{
+			var user = await _userService.GetByIdAsync(id, ct);
+			return user == null ? null : _mapper.Map<UserDto>(user);
+		}
 
-        /// <summary>
-        /// Deletes a user.
-        /// Currently does nothing (stub).
-        /// </summary>
-        public Task DeleteAsync(
-            Guid id,
-            CancellationToken cancellationToken = default)
-        {
-            
-            // For now just return completed task so code compiles.
-            return Task.CompletedTask;
-        }
+		public async Task<UserDto> CreateAsync(UserCreateDto dto, CancellationToken ct = default)
+		{
+			var user = await _userService.CreateUserAsync(
+				dto.Name,
+				dto.Email,
+				dto.EmployeeId,
+				dto.Role,
+				ct);
 
-        
-        // 2. Profile
-        
+			return _mapper.Map<UserDto>(user);
+		}
 
-        /// <summary>
-        /// Gets the profile for a specific user.
-        /// Currently returns null (stub).
-        /// </summary>
-        public Task<UserProfileDto?> GetProfileAsync(
-            Guid userId,
-            CancellationToken cancellationToken = default)
-        {
-            // TODO: Replace with real implementation
-            return Task.FromResult<UserProfileDto?>(null);
-        }
+		public async Task<UserDto?> UpdateAsync(Guid id, UserUpdateDto dto, CancellationToken ct = default)
+		{
+			var user = await _userService.UpdateUserAsync(
+				id,
+				dto.Name,
+				dto.Email,
+				dto.Role,
+				ct);
 
-        /// <summary>
-        /// Creates or updates a profile for a user.
-        /// Currently throws NotImplementedException (stub).
-        /// </summary>
-        public Task<UserProfileDto> UpsertProfileAsync(
-            Guid userId,
-            UserProfileCreateDto dto,
-            CancellationToken cancellationToken = default)
-        {
-            // TODO: Replace with real implementation
-            throw new NotImplementedException(
-                "UserApiService.UpsertProfileAsync is not wired yet.");
-        }
+			return _mapper.Map<UserDto>(user);
+		}
 
-        // 3. Account / points
-       
+		public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+		{
+			await _userService.DeleteUserAsync(id, ct);
+		}
 
-        /// <summary>
-        /// Returns the account (points balance) for a user.
-        /// Currently returns null (stub).
-        /// </summary>
-        public Task<UserAccountDto?> GetAccountAsync(
-            Guid userId,
-            CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult<UserAccountDto?>(null);
-        }
+		// ---------------- PROFILE ----------------
 
-        /// <summary>
-        /// Applies an operation to a user account (add / deduct / set).
-        /// Currently throws NotImplementedException (stub).
-        /// </summary>
-        public Task<UserAccountDto?> ApplyOperationAsync(
-            Guid userId,
-            UserAccountOperationDto dto,
-            CancellationToken cancellationToken = default)
-        {
-            
-            throw new NotImplementedException(
-                "UserApiService.ApplyOperationAsync is not wired yet.");
-        }
-    }
+		public async Task<UserProfileDto?> GetProfileAsync(Guid userId, CancellationToken ct = default)
+		{
+			var profile = await _profileService.GetByUserIdAsync(userId, ct);
+			return profile == null ? null : _mapper.Map<UserProfileDto>(profile);
+		}
+
+		public async Task<UserProfileDto> UpsertProfileAsync(
+			Guid userId,
+			UserProfileCreateDto dto,
+			CancellationToken ct = default)
+		{
+			var profile = await _profileService.CreateOrUpdateAsync(
+				userId,
+				dto.PhoneNumber,
+				dto.Department,
+				dto.Location,
+				ct);
+
+			return _mapper.Map<UserProfileDto>(profile);
+		}
+
+		// ---------------- ACCOUNT / POINTS ----------------
+
+		public async Task<UserAccountDto?> GetAccountAsync(Guid userId, CancellationToken ct = default)
+		{
+			var account = await _accountService.GetAccountAsync(userId, ct);
+			return account == null ? null : _mapper.Map<UserAccountDto>(account);
+		}
+
+		public async Task<UserAccountDto?> ApplyOperationAsync(
+			Guid userId,
+			UserAccountOperationDto dto,
+			CancellationToken ct = default)
+		{
+			if (dto == null)
+				throw new ArgumentNullException(nameof(dto));
+
+			switch (dto.Operation)
+			{
+				case UserAccountOperation.Add:
+					await _accountService.AddPointsAsync(userId, dto.Points, dto.Reference, ct);
+					break;
+
+				case UserAccountOperation.Deduct:
+					var success = await _accountService.TryDeductPointsAsync(
+						userId, dto.Points, dto.Reference, ct);
+
+					if (!success)
+						return null;
+					break;
+
+				case UserAccountOperation.Set:
+					// 🔥 IMPORTANT:
+					// SetPoints is intentionally removed from domain.
+					// We convert absolute value → delta internally.
+					await _accountService.AdjustPointsAsync(
+						userId, dto.Points, dto.Reference, ct);
+					break;
+
+				default:
+					throw new InvalidOperationException("Unsupported account operation.");
+			}
+
+			var updated = await _accountService.GetAccountAsync(userId, ct);
+			return updated == null ? null : _mapper.Map<UserAccountDto>(updated);
+		}
+	}
 }

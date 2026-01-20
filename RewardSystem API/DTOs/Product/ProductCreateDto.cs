@@ -1,21 +1,16 @@
-﻿namespace RewardSystem_API.DTOs.Product
+﻿using System.ComponentModel.DataAnnotations;
+
+public sealed class ProductCreateDto
 {
-    // Represents payload required to create a new product.
-    public sealed class ProductCreateDto
-    {
-        // Product name.
-        public string Name { get; set; } = string.Empty;
+	[Required]
+	public string Name { get; set; } = string.Empty;
 
-        // Optional description.
-        public string? Description { get; set; }
+	[Range(1, int.MaxValue)]
+	public int RequiredPoints { get; set; }
 
-        // Required points to redeem.
-        public int RequiredPoints { get; set; }
+	[Range(0, int.MaxValue)]
+	public int InitialStock { get; set; }
 
-        // Initial stock quantity for inventory.
-        public int InitialStock { get; set; }
-
-        // Optional SKU code.
-        public string? SKU { get; set; }
-    }
+	public string? Description { get; set; }
+	public string? SKU { get; set; }
 }

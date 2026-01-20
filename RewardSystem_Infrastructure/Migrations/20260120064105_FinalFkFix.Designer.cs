@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RewardSystem_Infrastructure.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using RewardSystem_Infrastructure.Infrastructure.Persistence;
 namespace RewardSystem_Infrastructure.Migrations
 {
     [DbContext(typeof(RewardDbContext))]
-    partial class RewardDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260120064105_FinalFkFix")]
+    partial class FinalFkFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -293,8 +296,7 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Points")
                         .HasColumnType("int");
@@ -404,8 +406,7 @@ namespace RewardSystem_Infrastructure.Migrations
 
                     b.Property<string>("Reference")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("RewardId")
                         .HasColumnType("uniqueidentifier");
@@ -420,8 +421,6 @@ namespace RewardSystem_Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("RewardId");
 
                     b.ToTable("RewardTransactions");
                 });
@@ -625,15 +624,6 @@ namespace RewardSystem_Infrastructure.Migrations
                     b.HasOne("Rewardsystem_Domain.Domain.Entities.Reward.Reward", null)
                         .WithOne("LatestPoints")
                         .HasForeignKey("Rewardsystem_Domain.Domain.Entities.Reward.RewardPoints", "RewardId1");
-                });
-
-            modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.Reward.RewardTransaction", b =>
-                {
-                    b.HasOne("Rewardsystem_Domain.Domain.Entities.Reward.Reward", null)
-                        .WithMany()
-                        .HasForeignKey("RewardId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Rewardsystem_Domain.Domain.Entities.User.User", b =>

@@ -1,19 +1,18 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System;
 
 namespace RewardSystem_API.DTOs.Event
 {
+	// Payload used to create a new event definition.
+	public sealed class EventDefinitionCreateDto
+	{
+		[Required]
+		[StringLength(200, MinimumLength = 3)]
+		public string Name { get; set; } = string.Empty;
 
-    // Payload used to create a new event definition.
-    public sealed class EventDefinitionCreateDto
-    {
-        // Name of the new event definition.
-        public string Name { get; set; } = string.Empty;
+		[StringLength(1000)]
+		public string? Description { get; set; }
 
-        // Description of the new event definition.
-        public string? Description { get; set; }
-
-        // Default reward points to grant for this event.
-        public int RewardPoints { get; set; }
-    }
+		[Range(1, int.MaxValue, ErrorMessage = "RewardPoints must be greater than 0.")]
+		public int RewardPoints { get; set; }
+	}
 }

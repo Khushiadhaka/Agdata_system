@@ -1,84 +1,76 @@
-﻿using AutoMapper;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
 using RewardSystem_API.DTOs.Product;
+using RewardSystem_Application.Interfaces.Inventory;
 using RewardSystem_Application.Interfaces.Product;
-
 
 namespace RewardSystem_API.Services
 {
-    /// <summary>
-    /// Contract for product + inventory operations used by ProductController.
-    /// </summary>
-    public interface IProductApiService
-    {
-        Task<IReadOnlyList<ProductDto>> ListAsync(
-            CancellationToken cancellationToken = default);
+	public sealed class ProductApiService : IProductApiService
+	{
+		private readonly IProductService _productService;
+		private readonly IInventoryService _inventoryService;
+		private readonly IMapper _mapper;
 
-        Task<ProductDto?> GetByIdAsync(
-            Guid id,
-            CancellationToken cancellationToken = default);
+		public ProductApiService(
+			IProductService productService,
+			IInventoryService inventoryService,
+			IMapper mapper)
+		{
+			_productService = productService;
+			_inventoryService = inventoryService;
+			_mapper = mapper;
+		}
 
-        Task<ProductDto> CreateAsync(
-            ProductCreateDto dto,
-            CancellationToken cancellationToken = default);
+		public async Task<IReadOnlyList<ProductDto>> ListAsync(CancellationToken ct = default)
+		{
+			var products = await _productService.ListAsync(false, ct);
+			return _mapper.Map<IReadOnlyList<ProductDto>>(products);
+		}
 
-        Task<ProductDto?> UpdateAsync(
-            Guid id,
-            ProductUpdateDto dto,
-            CancellationToken cancellationToken = default);
+		public async Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
+		{
+			var product = await _productService.GetByIdAsync(id, ct);
+			return product == null ? null : _mapper.Map<ProductDto>(product);
+		}
 
-        Task DeleteAsync(
-            Guid id,
-            CancellationToken cancellationToken = default);
+		public async Task<ProductDto> CreateAsync(ProductCreateDto dto, CancellationToken ct = default)
+		{
+			var product = await _productService.CreateProductAsync(
+				dto.Name,
+				dto.Description,
+				dto.RequiredPoints,
+				dto.InitialStock,
+				dto.SKU,
+				ct);
 
-        Task<ProductInventoryDto?> GetInventoryAsync(
-            Guid productId,
-            CancellationToken cancellationToken = default);
+			return _mapper.Map<ProductDto>(product);
+		}
 
-        Task UpdateStockAsync(
-            Guid productId,
-            int quantityChange,
-            CancellationToken cancellationToken = default);
-    }
+		public async Task<ProductDto> UpdateAsync(Guid id, ProductUpdateDto dto, CancellationToken ct = default)
+		{
+			var product = await _productService.UpdateProductAsync(
+				id,
+				dto.Name,
+				dto.Description,
+				dto.RequiredPoints,
+				dto.SKU,
+				ct);
 
-    /// <summary>
-    /// Stub implementation – hook to Application layer later.
-    /// </summary>
-    public sealed class ProductApiService : IProductApiService
-    {
-        public Task<IReadOnlyList<ProductDto>> ListAsync(
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
+			return _mapper.Map<ProductDto>(product);
+		}
 
-        public Task<ProductDto?> GetByIdAsync(
-            Guid id,
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
+		public async Task DeactivateAsync(Guid id, CancellationToken ct = default)
+		{
+			await _productService.DeactivateAsync(id, ct);
+		}
 
-        public Task<ProductDto> CreateAsync(
-            ProductCreateDto dto,
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
-
-        public Task<ProductDto?> UpdateAsync(
-            Guid id,
-            ProductUpdateDto dto,
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
-
-        public Task DeleteAsync(
-            Guid id,
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
-
-        public Task<ProductInventoryDto?> GetInventoryAsync(
-            Guid productId,
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
-
-        public Task UpdateStockAsync(
-            Guid productId,
-            int quantityChange,
-            CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
-    }
+		public async Task AdjustStockAsync(Guid id, int delta, CancellationToken ct = default)
+		{
+			await _productService.AdjustStockAsync(id, delta, ct);
+		}
+	}
 }

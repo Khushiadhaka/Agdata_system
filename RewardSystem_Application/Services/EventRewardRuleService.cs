@@ -1,5 +1,4 @@
-﻿// Manages reward rules attached to event definitions (create/update/deactivate/list).
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -12,72 +11,81 @@ using Rewardsystem_Domain.Domain.Entities.Event;
 
 namespace RewardSystem_Application.Services
 {
-    // Manages reward rules attached to event definitions (create/update/deactivate/list).
-    public class EventRewardRuleService : IEventRewardRuleService
-    {
-        private readonly IEventRewardRuleRepository _repo;
-        private readonly IUnitOfWork _uow;
+	// Manages reward rules for event definitions.
+	public sealed class EventRewardRuleService : IEventRewardRuleService
+	{
+		private readonly IEventRewardRuleRepository _repo;
+		private readonly IUnitOfWork _uow;
 
-        public EventRewardRuleService(IEventRewardRuleRepository repo, IUnitOfWork uow)
-        {
-            _repo = repo ?? throw new ArgumentNullException(nameof(repo));
-            _uow = uow ?? throw new ArgumentNullException(nameof(uow));
-        }
+		public EventRewardRuleService(IEventRewardRuleRepository repo, IUnitOfWork uow)
+		{
+			_repo = repo ?? throw new ArgumentNullException(nameof(repo));
+			_uow = uow ?? throw new ArgumentNullException(nameof(uow));
+		}
 
-        // Create a new reward rule for an event definition.
-        public async Task<EventRewardRule> CreateAsync(
-            Guid eventDefinitionId,
-            string condition,
-            int points,
-            CancellationToken ct = default)
-        {
-            if (eventDefinitionId == Guid.Empty)
-                throw new ValidationException("EventDefinitionId required.");
-            if (string.IsNullOrWhiteSpace(condition))
-                throw new ValidationException("Condition required.");
-            if (points <= 0)
-                throw new ValidationException("Points must be positive.");
+		public async Task<EventRewardRule> CreateAsync(
+			Guid eventDefinitionId,
+			string condition,
+			int points,
+			CancellationToken ct = default)
+		{
+			if (eventDefinitionId == Guid.Empty)
+				throw new ValidationException("EventDefinitionId required.");
+			if (string.IsNullOrWhiteSpace(condition))
+				throw new ValidationException("Condition required.");
+			if (points <= 0)
+				throw new ValidationException("Points must be positive.");
 
-            var rule = new EventRewardRule(eventDefinitionId, condition.Trim(), points);
-            await _repo.AddAsync(rule, ct);
-            await _uow.SaveChangesAsync(ct);
-            return rule;
-        }
+			var rule = new EventRewardRule(eventDefinitionId, condition.Trim(), points);
+			await _repo.AddAsync(rule, ct);
+			await _uow.SaveChangesAsync(ct);
+			return rule;
+		}
 
-        // Update an existing rule.
-        public async Task<EventRewardRule> UpdateAsync(
-            Guid ruleId,
-            string condition,
-            int points,
-            CancellationToken ct = default)
-        {
-            var r = await _repo.GetByIdAsync(ruleId, ct)
-                    ?? throw new InvalidOperationException("Rule not found.");
+		public async Task<EventRewardRule> UpdateAsync(
+			Guid ruleId,
+			string condition,
+			int points,
+			CancellationToken ct = default)
+		{
+			var rule = await _repo.GetByIdAsync(ruleId, ct)
+					   ?? throw new InvalidOperationException("Reward rule not found.");
 
-            r.Update(condition.Trim(), points);
-            await _repo.UpdateAsync(r, ct);
-            await _uow.SaveChangesAsync(ct);
-            return r;
-        }
+			rule.Update(condition.Trim(), points);
+			await _repo.UpdateAsync(rule, ct);
+			await _uow.SaveChangesAsync(ct);
+			return rule;
+		}
 
-        // Get rules by event definition id.
-        public async Task<IReadOnlyList<EventRewardRule>> GetByDefinitionAsync(
-            Guid eventDefinitionId,
-            CancellationToken ct = default)
-        {
-            var list = await _repo.GetByEventDefinitionIdAsync(eventDefinitionId, ct);
-            return list.ToList();
-        }
+		public async Task<IReadOnlyList<EventRewardRule>> GetByDefinitionAsync(
+			Guid eventDefinitionId,
+			CancellationToken ct = default)
+		{
+			if (eventDefinitionId == Guid.Empty)
+				throw new ValidationException("EventDefinitionId required.");
 
-        // Deactivate a rule.
-        public async Task DeactivateAsync(Guid ruleId, CancellationToken ct = default)
-        {
-            var r = await _repo.GetByIdAsync(ruleId, ct)
-                    ?? throw new InvalidOperationException("Rule not found.");
+			var list = await _repo.GetByEventDefinitionIdAsync(eventDefinitionId, ct);
+			return list.ToList();
+		}
 
-            r.Deactivate();
-            await _repo.UpdateAsync(r, ct);
-            await _uow.SaveChangesAsync(ct);
-        }
-    }
+		public async Task DeactivateAsync(Guid ruleId, CancellationToken ct = default)
+		{
+			var rule = await _repo.GetByIdAsync(ruleId, ct)
+					   ?? throw new InvalidOperationException("Reward rule not found.");
+
+			rule.Deactivate();
+			await _repo.UpdateAsync(rule, ct);
+			await _uow.SaveChangesAsync(ct);
+		}
+
+		public async Task ActivateAsync(Guid ruleId, CancellationToken ct = default)
+		{
+			var rule = await _repo.GetByIdAsync(ruleId, ct)
+					   ?? throw new InvalidOperationException("Reward rule not found.");
+
+			rule.Activate();
+			await _repo.UpdateAsync(rule, ct);
+			await _uow.SaveChangesAsync(ct);
+		}
+	}
 }

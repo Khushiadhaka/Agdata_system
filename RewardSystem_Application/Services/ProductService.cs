@@ -104,27 +104,30 @@ namespace RewardSystem_Application.Services
             return product;
         }
 
-        // Adjust stock for a product (positive = increase, negative = decrease).
-        public async Task AdjustStockAsync(Guid productId, int delta, CancellationToken ct = default)
-        {
-            var inventory = await _inventoryRepo.GetByProductIdAsync(productId, ct)
-                            ?? throw new InvalidOperationException("Inventory not found.");
+		// Adjust stock for a product (positive = increase, negative = decrease).
+		public async Task AdjustStockAsync(Guid productId, int delta, CancellationToken ct = default)
+		{
+			if (delta == 0)
+				return;
 
-            if (delta > 0)
-            {
-                inventory.IncreaseStock(delta);
-            }
-            else if (delta < 0)
-            {
-                inventory.ReduceStock(Math.Abs(delta));
-            }
+			var inventory = await _inventoryRepo.GetByProductIdAsync(productId, ct)
+							?? throw new InvalidOperationException("Inventory not found.");
 
-            await _inventoryRepo.UpdateAsync(inventory, ct);
-            await _uow.SaveChangesAsync(ct);
-        }
+			if (delta > 0)
+			{
+				inventory.IncreaseStock(delta);
+			}
+			else // delta < 0
+			{
+				inventory.ReduceStock(Math.Abs(delta));
+			}
 
-        // Deactivate product ensuring there are no pending redemptions.
-        public async Task DeactivateAsync(Guid productId, CancellationToken ct = default)
+			await _inventoryRepo.UpdateAsync(inventory, ct);
+			await _uow.SaveChangesAsync(ct);
+		}
+
+		// Deactivate product ensuring there are no pending redemptions.
+		public async Task DeactivateAsync(Guid productId, CancellationToken ct = default)
         {
             var product = await _productRepo.GetByIdAsync(productId, ct)
                           ?? throw new InvalidOperationException("Product not found.");

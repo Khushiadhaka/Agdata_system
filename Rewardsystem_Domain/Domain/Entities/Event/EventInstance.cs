@@ -3,112 +3,97 @@ using Rewardsystem_Domain.Domain.Common;
 
 namespace Rewardsystem_Domain.Domain.Entities.Event
 {
-    // Represents a scheduled instance of an EventDefinition.
-    public sealed class EventInstance : BaseEntity
-    {
-        // Identifier of the EventDefinition this instance belongs to.
-        public Guid EventDefinitionId { get; private set; }
+	// Represents a scheduled instance of an EventDefinition.
+	public sealed class EventInstance : BaseEntity
+	{
+		public Guid EventDefinitionId { get; private set; }
+		public DateTime StartTime { get; private set; }
+		public DateTime EndTime { get; private set; }
+		public bool IsCompleted { get; private set; }
+		public bool IsCancelled { get; private set; }
+		public Guid? WinnerUserId { get; private set; }
+		public int? Rank { get; private set; }
 
-        // Start time (UTC) of the event instance.
-        public DateTime StartTime { get; private set; }
+		private EventInstance() { }
 
-        // End time (UTC) of the event instance.
-        public DateTime EndTime { get; private set; }
+		public EventInstance(Guid eventDefinitionId, DateTime startTime, DateTime endTime)
+		{
+			if (eventDefinitionId == Guid.Empty)
+				throw new ValidationException("EventDefinitionId cannot be empty.");
 
-        // Flag indicating whether the instance is completed.
-        public bool IsCompleted { get; private set; }
+			startTime = EnsureUtc(startTime);
+			endTime = EnsureUtc(endTime);
 
-        // Flag indicating whether the instance was cancelled.
-        public bool IsCancelled { get; private set; }
+			if (endTime <= startTime)
+				throw new ValidationException("End time must be after start time.");
 
-        // Optional winner user id (if any).
-        public Guid? WinnerUserId { get; private set; }
+			EventDefinitionId = eventDefinitionId;
+			StartTime = startTime;
+			EndTime = endTime;
+			IsCompleted = false;
+			IsCancelled = false;
+		}
 
-        // Optional rank of the winner (1 => first place).
-        public int? Rank { get; private set; }
+		// Winner can be assigned ONLY after completion
+		public void AssignWinner(Guid winnerUserId, int rank)
+		{
+			if (!IsCompleted)
+				throw new BusinessRuleException("Winner can be assigned only after event completion.");
 
-        // Parameterless constructor for EF Core.
-        private EventInstance() { }
+			if (winnerUserId == Guid.Empty)
+				throw new ValidationException("Winner user id cannot be empty.");
 
-        // Main constructor with validation.
-        public EventInstance(Guid eventDefinitionId, DateTime startTime, DateTime endTime)
-        {
-            if (eventDefinitionId == Guid.Empty)
-                throw new ValidationException("EventDefinitionId cannot be empty.");
+			if (rank <= 0)
+				throw new ValidationException("Rank must be greater than zero.");
 
-            if (startTime.Kind == DateTimeKind.Unspecified)
-                startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
+			WinnerUserId = winnerUserId;
+			Rank = rank;
+			MarkUpdated();
+		}
 
-            if (endTime.Kind == DateTimeKind.Unspecified)
-                endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
+		public void MarkCompleted()
+		{
+			if (IsCancelled)
+				throw new BusinessRuleException("Cancelled instance cannot be completed.");
 
-            if (endTime <= startTime)
-                throw new ValidationException("End time must be after start time.");
+			if (IsCompleted)
+				throw new BusinessRuleException("Instance is already completed.");
 
-            EventDefinitionId = eventDefinitionId;
-            StartTime = startTime;
-            EndTime = endTime;
-            IsCompleted = false;
-            IsCancelled = false;
-        }
+			IsCompleted = true;
+			MarkUpdated();
+		}
 
-        // Assign a winner with rank.
-        public void AssignWinner(Guid winnerUserId, int rank)
-        {
-            if (winnerUserId == Guid.Empty)
-                throw new ValidationException("Winner user id cannot be empty.");
+		public void Cancel()
+		{
+			if (IsCompleted)
+				throw new BusinessRuleException("Completed instance cannot be cancelled.");
 
-            if (rank <= 0)
-                throw new ValidationException("Rank must be greater than zero.");
+			if (IsCancelled)
+				throw new BusinessRuleException("Instance is already cancelled.");
 
-            WinnerUserId = winnerUserId;
-            Rank = rank;
-            MarkUpdated();
-        }
+			IsCancelled = true;
+			MarkUpdated();
+		}
 
-        // Mark instance as completed (cannot be cancelled afterwards).
-        public void MarkCompleted()
-        {
-            if (IsCancelled)
-                throw new BusinessRuleException("Cancelled instance cannot be completed.");
+		public void ExtendEndTime(DateTime newEndTime)
+		{
+			newEndTime = EnsureUtc(newEndTime);
 
-            if (IsCompleted)
-                throw new BusinessRuleException("Instance is already completed.");
+			if (newEndTime <= EndTime)
+				throw new ValidationException("New end time must be later than current end time.");
 
-            IsCompleted = true;
-            MarkUpdated();
-        }
+			if (IsCancelled || IsCompleted)
+				throw new BusinessRuleException("Cannot modify cancelled or completed instance.");
 
-        // Cancel the instance (if not completed).
-        public void Cancel()
-        {
-            if (IsCompleted)
-                throw new BusinessRuleException("Completed instance cannot be cancelled.");
+			EndTime = newEndTime;
+			MarkUpdated();
+		}
 
-            if (IsCancelled)
-                throw new BusinessRuleException("Instance is already cancelled.");
-
-            IsCancelled = true;
-            MarkUpdated();
-        }
-
-        // Extend the end time (business action).
-        public void ExtendEndTime(DateTime newEndTime)
-        {
-            if (newEndTime.Kind == DateTimeKind.Unspecified)
-                newEndTime = DateTime.SpecifyKind(newEndTime, DateTimeKind.Utc);
-
-            if (newEndTime <= EndTime)
-                throw new ValidationException("New end time must be later than current end time.");
-
-            if (IsCancelled)
-                throw new BusinessRuleException("Cancelled instance cannot be modified.");
-
-            if (IsCompleted)
-                throw new BusinessRuleException("Completed instance cannot be modified.");
-
-            EndTime = newEndTime;
-            MarkUpdated();
-        }
-    }
+		private static DateTime EnsureUtc(DateTime dt)
+		{
+			return dt.Kind == DateTimeKind.Unspecified
+				? DateTime.SpecifyKind(dt, DateTimeKind.Utc)
+				: dt.ToUniversalTime();
+		}
+	}
 }

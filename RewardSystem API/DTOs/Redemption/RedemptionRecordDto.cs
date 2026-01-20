@@ -1,18 +1,13 @@
-﻿namespace RewardSystem_API.DTOs.Redemption
+﻿using System;
+
+namespace RewardSystem_API.DTOs.Redemption
 {
-    // Represents a completed redemption (product delivered).
-    public sealed class RedemptionRecordDto
-    {
-        // Unique record id.
-        public Guid Id { get; set; }
-
-        // User who redeemed the product.
-        public Guid UserId { get; set; }
-
-        // Redeemed product id.
-        public Guid ProductId { get; set; }
-
-        // When the redemption was completed.
-        public DateTime RedeemedAt { get; set; }
-    }
+	public sealed class RedemptionRecordDto
+	{
+		public Guid Id { get; set; }
+		public Guid UserId { get; set; }
+		public Guid ProductId { get; set; }
+		public DateTime RedeemedAt { get; set; }
+		public string? Reference { get; set; }
+	}
 }

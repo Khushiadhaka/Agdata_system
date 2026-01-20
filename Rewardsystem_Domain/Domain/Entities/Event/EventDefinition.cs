@@ -3,75 +3,63 @@ using Rewardsystem_Domain.Domain.Common;
 
 namespace Rewardsystem_Domain.Domain.Entities.Event
 {
-    // Reusable definition of an event type (template).
-    public sealed class EventDefinition : BaseEntity
-    {
-        // Definition name (non-nullable, default empty).
-        public string Name { get; private set; } = string.Empty;
+	// Reusable definition of an event type (template).
+	public sealed class EventDefinition : BaseEntity
+	{
+		public string Name { get; private set; } = string.Empty;
+		public string Description { get; private set; } = string.Empty;
+		public int RewardPoints { get; private set; }
+		public bool IsActive { get; private set; }
 
-        // Description for the definition (non-nullable, default empty).
-        public string Description { get; private set; } = string.Empty;
+		private EventDefinition() { }
 
-        // Default reward points associated with this definition.
-        public int RewardPoints { get; private set; }
+		public EventDefinition(string name, string? description, int rewardPoints)
+		{
+			if (string.IsNullOrWhiteSpace(name))
+				throw new ValidationException("Event definition name cannot be empty.");
 
-        // Whether this definition is active and can be used.
-        public bool IsActive { get; private set; } = true;
+			if (rewardPoints <= 0)
+				throw new ValidationException("Reward points must be greater than zero.");
 
-        // Parameterless constructor for EF Core.
-        private EventDefinition() { }
+			Name = name.Trim();
+			Description = (description ?? string.Empty).Trim();
+			RewardPoints = rewardPoints;
+			IsActive = true;
+		}
 
-        // Main constructor with validation.
-        public EventDefinition(string name, string? description, int rewardPoints)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ValidationException("Event definition name cannot be empty.");
+		public void Update(string name, string? description, int rewardPoints)
+		{
+			if (!IsActive)
+				throw new BusinessRuleException("Cannot update an inactive event definition.");
 
-            if (rewardPoints <= 0)
-                throw new ValidationException("Reward points must be greater than zero.");
+			if (string.IsNullOrWhiteSpace(name))
+				throw new ValidationException("Event definition name cannot be empty.");
 
-            Name = name.Trim();
-            Description = (description ?? string.Empty).Trim();
-            RewardPoints = rewardPoints;
-            IsActive = true;
-        }
+			if (rewardPoints <= 0)
+				throw new ValidationException("Reward points must be greater than zero.");
 
-        // Update definition details.
-        public void Update(string name, string? description, int rewardPoints)
-        {
-            if (!IsActive)
-                throw new BusinessRuleException("Cannot update an inactive event definition.");
+			Name = name.Trim();
+			Description = (description ?? string.Empty).Trim();
+			RewardPoints = rewardPoints;
+			MarkUpdated();
+		}
 
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ValidationException("Event definition name cannot be empty.");
+		public void Deactivate()
+		{
+			if (!IsActive)
+				throw new BusinessRuleException("Event definition is already inactive.");
 
-            if (rewardPoints <= 0)
-                throw new ValidationException("Reward points must be greater than zero.");
+			IsActive = false;
+			MarkUpdated();
+		}
 
-            Name = name.Trim();
-            Description = (description ?? string.Empty).Trim();
-            RewardPoints = rewardPoints;
-            MarkUpdated();
-        }
+		public void Activate()
+		{
+			if (IsActive)
+				throw new BusinessRuleException("Event definition is already active.");
 
-        // Deactivate definition.
-        public void Deactivate()
-        {
-            if (!IsActive)
-                throw new BusinessRuleException("Event definition is already inactive.");
-
-            IsActive = false;
-            MarkUpdated();
-        }
-
-        // Reactivate definition.
-        public void Activate()
-        {
-            if (IsActive)
-                throw new BusinessRuleException("Event definition is already active.");
-
-            IsActive = true;
-            MarkUpdated();
-        }
-    }
+			IsActive = true;
+			MarkUpdated();
+		}
+	}
 }

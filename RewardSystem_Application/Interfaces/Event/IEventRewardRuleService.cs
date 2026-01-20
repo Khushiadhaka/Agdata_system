@@ -1,26 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Rewardsystem_Domain.Domain.Entities.Event;
 
 namespace RewardSystem_Application.Interfaces.Event
 {
-    // Manage reward rules for event definitions
-    public interface IEventRewardRuleService
-    {
-        Task<Rewardsystem_Domain.Domain.Entities.Event.EventRewardRule> CreateAsync(
-            Guid eventDefinitionId,
-            string condition,
-            int points,
-            CancellationToken ct = default);
+	// Manages reward rules for event definitions (Admin operations).
+	public interface IEventRewardRuleService
+	{
+		Task<EventRewardRule> CreateAsync(
+			Guid eventDefinitionId,
+			string condition,
+			int points,
+			CancellationToken ct = default);
 
-        Task<Rewardsystem_Domain.Domain.Entities.Event.EventRewardRule> UpdateAsync(
-            Guid ruleId,
-            string condition,
-            int points,
-            CancellationToken ct = default);
+		Task<EventRewardRule> UpdateAsync(
+			Guid ruleId,
+			string condition,
+			int points,
+			CancellationToken ct = default);
 
-        Task<IReadOnlyList<Rewardsystem_Domain.Domain.Entities.Event.EventRewardRule>> GetByDefinitionAsync(Guid eventDefinitionId, CancellationToken ct = default);
+		Task<IReadOnlyList<EventRewardRule>> GetByDefinitionAsync(
+			Guid eventDefinitionId,
+			CancellationToken ct = default);
 
-        Task DeactivateAsync(Guid ruleId, CancellationToken ct = default);
-    }
+		Task DeactivateAsync(Guid ruleId, CancellationToken ct = default);
+
+		Task ActivateAsync(Guid ruleId, CancellationToken ct = default);
+	}
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RewardSystem_Infrastructure.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using RewardSystem_Infrastructure.Infrastructure.Persistence;
 namespace RewardSystem_Infrastructure.Migrations
 {
     [DbContext(typeof(RewardDbContext))]
-    partial class RewardDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260120064448_FinalRewardFkFix")]
+    partial class FinalRewardFkFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

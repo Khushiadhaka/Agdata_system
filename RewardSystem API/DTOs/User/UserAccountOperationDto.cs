@@ -1,17 +1,28 @@
 ﻿using System.ComponentModel.DataAnnotations;
+
 namespace RewardSystem_API.DTOs.User
 {
-    // Represents payload for operations on user account points.
-    public sealed class UserAccountOperationDto
-    {
-        // Target user identifier.
-        public Guid UserId { get; set; }
+	/// <summary>
+	/// Supported operations on a user account.
+	/// </summary>
+	public enum UserAccountOperation
+	{
+		Add = 1,
+		Deduct = 2,
+		Set = 3
+	}
 
-        // Points value (add/set/deduct defined by API endpoint).
-        public int Points { get; set; }
+	/// <summary>
+	/// Request payload for operating on a user's account.
+	/// </summary>
+	public sealed class UserAccountOperationDto
+	{
+		[Required]
+		public UserAccountOperation Operation { get; set; }
 
-        // Optional reference / description.
-        public string? Reference { get; set; }
-        public string Operation { get; set; }
-    }
+		[Range(1, int.MaxValue, ErrorMessage = "Points must be greater than 0.")]
+		public int Points { get; set; }
+
+		public string? Reference { get; set; }
+	}
 }

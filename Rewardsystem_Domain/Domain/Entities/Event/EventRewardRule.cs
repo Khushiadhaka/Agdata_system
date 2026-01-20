@@ -3,77 +3,65 @@ using Rewardsystem_Domain.Domain.Common;
 
 namespace Rewardsystem_Domain.Domain.Entities.Event
 {
-    // Defines a reward rule associated with an EventDefinition (e.g., top 3 get X points).
-    public sealed class EventRewardRule : BaseEntity
-    {
-        // Identifier of the related EventDefinition.
-        public Guid EventDefinitionId { get; private set; }
+	// Defines a reward rule associated with an EventDefinition.
+	public sealed class EventRewardRule : BaseEntity
+	{
+		public Guid EventDefinitionId { get; private set; }
+		public string Condition { get; private set; } = string.Empty;
+		public int Points { get; private set; }
+		public bool IsActive { get; private set; }
 
-        // Condition text describing when the rule applies (non-nullable).
-        public string Condition { get; private set; } = string.Empty;
+		private EventRewardRule() { }
 
-        // Points to award when condition is met.
-        public int Points { get; private set; }
+		public EventRewardRule(Guid eventDefinitionId, string condition, int points)
+		{
+			if (eventDefinitionId == Guid.Empty)
+				throw new ValidationException("EventDefinitionId cannot be empty.");
 
-        // Whether the rule is active.
-        public bool IsActive { get; private set; } = true;
+			if (string.IsNullOrWhiteSpace(condition))
+				throw new ValidationException("Condition cannot be empty.");
 
-        // Parameterless constructor for EF Core.
-        private EventRewardRule() { }
+			if (points <= 0)
+				throw new ValidationException("Points must be greater than zero.");
 
-        // Main constructor with validation.
-        public EventRewardRule(Guid eventDefinitionId, string condition, int points)
-        {
-            if (eventDefinitionId == Guid.Empty)
-                throw new ValidationException("EventDefinitionId cannot be empty.");
+			EventDefinitionId = eventDefinitionId;
+			Condition = condition.Trim();
+			Points = points;
+			IsActive = true;
+		}
 
-            if (string.IsNullOrWhiteSpace(condition))
-                throw new ValidationException("Condition cannot be empty.");
+		public void Update(string condition, int points)
+		{
+			if (!IsActive)
+				throw new BusinessRuleException("Cannot update an inactive reward rule.");
 
-            if (points <= 0)
-                throw new ValidationException("Points must be greater than zero.");
+			if (string.IsNullOrWhiteSpace(condition))
+				throw new ValidationException("Condition cannot be empty.");
 
-            EventDefinitionId = eventDefinitionId;
-            Condition = condition.Trim();
-            Points = points;
-            IsActive = true;
-        }
+			if (points <= 0)
+				throw new ValidationException("Points must be greater than zero.");
 
-        // Update rule details.
-        public void Update(string condition, int points)
-        {
-            if (!IsActive)
-                throw new BusinessRuleException("Cannot update an inactive reward rule.");
+			Condition = condition.Trim();
+			Points = points;
+			MarkUpdated();
+		}
 
-            if (string.IsNullOrWhiteSpace(condition))
-                throw new ValidationException("Condition cannot be empty.");
+		public void Deactivate()
+		{
+			if (!IsActive)
+				throw new BusinessRuleException("Reward rule is already inactive.");
 
-            if (points <= 0)
-                throw new ValidationException("Points must be greater than zero.");
+			IsActive = false;
+			MarkUpdated();
+		}
 
-            Condition = condition.Trim();
-            Points = points;
-            MarkUpdated();
-        }
+		public void Activate()
+		{
+			if (IsActive)
+				throw new BusinessRuleException("Reward rule is already active.");
 
-        // Deactivate the rule.
-        public void Deactivate()
-        {
-            if (!IsActive)
-                throw new BusinessRuleException("Reward rule is already inactive.");
-
-            IsActive = false;
-            MarkUpdated();
-        }
-
-        // Reactivate the rule.
-        public void Activate()
-        {
-            if (IsActive)
-                throw new BusinessRuleException("Reward rule is already active.");
-
-            IsActive = true;
-            MarkUpdated();
-        }
-    }
+			IsActive = true;
+			MarkUpdated();
+		}
+	}
 }

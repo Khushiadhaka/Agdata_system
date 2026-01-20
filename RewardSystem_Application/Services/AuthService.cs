@@ -1,5 +1,5 @@
 ﻿using RewardSystem_Application.Common;
-using RewardSystem_Application.Interfaces.Auth;
+
 using RewardSystem_Application.Interfaces.Security;
 using RewardSystem_Application.Repositories;
 using Rewardsystem_Domain.Domain.Common;
@@ -7,6 +7,7 @@ using Rewardsystem_Domain.Domain.Entities.User;
 using Rewardsystem_Domain.Domain.Enums;
 using Rewardsystem_Domain.Domain.Exceptions;
 using System.Security.Authentication;
+using RewardSystem_Application.Interfaces.Auth;
 
 namespace RewardSystem_Application.Services
 {

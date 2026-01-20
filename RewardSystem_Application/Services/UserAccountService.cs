@@ -1,5 +1,4 @@
-﻿// Handles user account (points) operations and records point transactions.
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using RewardSystem_Application.Common;
@@ -11,92 +10,100 @@ using Rewardsystem_Domain.Domain.Enums;
 
 namespace RewardSystem_Application.Services
 {
-    // Handles user account (points) operations and records point transactions.
-    public class UserAccountService : IUserAccountService
-    {
-        private readonly IUserAccountRepository _accountRepo;
-        private readonly IPointsTransactionRepository _pointsRepo;
-        private readonly IUnitOfWork _uow;
+	// Handles user account (points) operations and records point transactions.
+	public class UserAccountService : IUserAccountService
+	{
+		private readonly IUserAccountRepository _accountRepo;
+		private readonly IPointsTransactionRepository _pointsRepo;
+		private readonly IUnitOfWork _uow;
 
-        public UserAccountService(IUserAccountRepository accountRepo, IPointsTransactionRepository pointsRepo, IUnitOfWork uow)
-        {
-            _accountRepo = accountRepo ?? throw new ArgumentNullException(nameof(accountRepo));
-            _pointsRepo = pointsRepo ?? throw new ArgumentNullException(nameof(pointsRepo));
-            _uow = uow ?? throw new ArgumentNullException(nameof(uow));
-        }
+		public UserAccountService(
+			IUserAccountRepository accountRepo,
+			IPointsTransactionRepository pointsRepo,
+			IUnitOfWork uow)
+		{
+			_accountRepo = accountRepo;
+			_pointsRepo = pointsRepo;
+			_uow = uow;
+		}
 
-        // Return the current points balance for a user.
-        public async Task<int> GetBalanceAsync(Guid userId, CancellationToken ct = default)
-        {
-            if (userId == Guid.Empty) throw new ValidationException("UserId required.");
-            var account = await _accountRepo.GetByUserIdAsync(userId, ct)
-                          ?? throw new InvalidOperationException("User account not found.");
-            return account.Points;
-        }
+		public async Task<int> GetBalanceAsync(Guid userId, CancellationToken ct = default)
+		{
+			if (userId == Guid.Empty)
+				throw new ValidationException("UserId required.");
 
-        // Add points to a user's account and create a points transaction.
-        public async Task AddPointsAsync(Guid userId, int points, string? reference = null, CancellationToken ct = default)
-        {
-            if (userId == Guid.Empty) throw new ValidationException("UserId required.");
-            if (points <= 0) throw new ValidationException("Points must be greater than zero.");
+			var account = await _accountRepo.GetByUserIdAsync(userId, ct)
+						  ?? throw new InvalidOperationException("User account not found.");
 
-            var account = await _accountRepo.GetByUserIdAsync(userId, ct)
-                          ?? throw new InvalidOperationException("User account not found.");
-            if (account.Status != AccountStatus.Active) throw new BusinessRuleException("Only active accounts can receive points.");
+			return account.Points;
+		}
 
-            account.AddPoints(points);
-            await _accountRepo.UpdateAsync(account, ct);
+		public async Task AddPointsAsync(Guid userId, int points, string? reference = null, CancellationToken ct = default)
+		{
+			if (points <= 0)
+				throw new ValidationException("Points must be greater than zero.");
 
-            var tx = new PointsTransaction(userId, points, PointsTransactionType.Earn, reference);
-            await _pointsRepo.AddAsync(tx, ct);
+			var account = await _accountRepo.GetByUserIdAsync(userId, ct)
+						  ?? throw new InvalidOperationException("User account not found.");
 
-            await _uow.SaveChangesAsync(ct);
-        }
+			account.AddPoints(points);
+			await _accountRepo.UpdateAsync(account, ct);
 
-        // Try to deduct points; returns true when deduction was successful.
-        public async Task<bool> TryDeductPointsAsync(Guid userId, int points, string? reference = null, CancellationToken ct = default)
-        {
-            if (userId == Guid.Empty) throw new ValidationException("UserId required.");
-            if (points <= 0) throw new ValidationException("Points must be greater than zero.");
+			var tx = new PointsTransaction(userId, points, PointsTransactionType.Earn, reference);
+			await _pointsRepo.AddAsync(tx, ct);
 
-            var account = await _accountRepo.GetByUserIdAsync(userId, ct)
-                          ?? throw new InvalidOperationException("User account not found.");
-            if (account.Points < points) return false;
+			await _uow.SaveChangesAsync(ct);
+		}
 
-            account.DeductPoints(points);
-            await _accountRepo.UpdateAsync(account, ct);
+		public async Task<bool> TryDeductPointsAsync(Guid userId, int points, string? reference = null, CancellationToken ct = default)
+		{
+			if (points <= 0)
+				throw new ValidationException("Points must be greater than zero.");
 
-            var tx = new PointsTransaction(userId, points, PointsTransactionType.Redeem, reference);
-            await _pointsRepo.AddAsync(tx, ct);
+			var account = await _accountRepo.GetByUserIdAsync(userId, ct)
+						  ?? throw new InvalidOperationException("User account not found.");
 
-            await _uow.SaveChangesAsync(ct);
-            return true;
-        }
+			if (account.Points < points)
+				return false;
 
-        // Set points directly on account (admin operation).
-        public async Task SetPointsAsync(Guid userId, int points, string? reference = null, CancellationToken ct = default)
-        {
-            if (userId == Guid.Empty) throw new ValidationException("UserId required.");
-            if (points < 0) throw new ValidationException("Points cannot be negative.");
+			account.DeductPoints(points);
+			await _accountRepo.UpdateAsync(account, ct);
 
-            var account = await _accountRepo.GetByUserIdAsync(userId, ct)
-                          ?? throw new InvalidOperationException("User account not found.");
-            account.SetPoints(points);
-            await _accountRepo.UpdateAsync(account, ct);
+			var tx = new PointsTransaction(userId, points, PointsTransactionType.Redeem, reference);
+			await _pointsRepo.AddAsync(tx, ct);
 
-            var tx = new PointsTransaction(userId, points, PointsTransactionType.Adjust, reference);
-            await _pointsRepo.AddAsync(tx, ct);
+			await _uow.SaveChangesAsync(ct);
+			return true;
+		}
 
-            await _uow.SaveChangesAsync(ct);
-        }
+		// ✅ SAFE ADMIN ADJUST (absolute -> delta)
+		public async Task AdjustPointsAsync(Guid userId, int newPoints, string? reference = null, CancellationToken ct = default)
+		{
+			if (newPoints < 0)
+				throw new ValidationException("Points cannot be negative.");
 
-        // Return the UserAccount aggregate for advanced scenarios.
-        public async Task<Rewardsystem_Domain.Domain.Entities.User.UserAccount?> GetAccountAsync(
-            Guid userId,
-            CancellationToken ct = default)
-        {
-            if (userId == Guid.Empty) throw new ValidationException("UserId required.");
-            return await _accountRepo.GetByUserIdAsync(userId, ct);
-        }
-    }
+			var account = await _accountRepo.GetByUserIdAsync(userId, ct)
+						  ?? throw new InvalidOperationException("User account not found.");
+
+			var delta = newPoints - account.Points;
+			account.AdjustPoints(delta);
+
+			await _accountRepo.UpdateAsync(account, ct);
+
+			var tx = new PointsTransaction(userId, delta, PointsTransactionType.Adjust, reference);
+			await _pointsRepo.AddAsync(tx, ct);
+
+			await _uow.SaveChangesAsync(ct);
+		}
+
+		public async Task<Rewardsystem_Domain.Domain.Entities.User.UserAccount?> GetAccountAsync(
+			Guid userId,
+			CancellationToken ct = default)
+		{
+			if (userId == Guid.Empty)
+				throw new ValidationException("UserId required.");
+
+			return await _accountRepo.GetByUserIdAsync(userId, ct);
+		}
+	}
 }

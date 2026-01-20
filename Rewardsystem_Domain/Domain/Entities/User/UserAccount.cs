@@ -4,96 +4,104 @@ using Rewardsystem_Domain.Domain.Enums;
 
 namespace Rewardsystem_Domain.Domain.Entities.User
 {
-    // Stores reward points balance + login credentials for a user.
-    public sealed class UserAccount : BaseEntity
-    {
-        // Associated User ID
-        public Guid UserId { get; private set; }
+	// Stores reward points balance + login credentials for a user.
+	public sealed class UserAccount : BaseEntity
+	{
+		// Associated User ID
+		public Guid UserId { get; private set; }
 
-        // Current points balance
-        public int Points { get; private set; }
+		// Current points balance
+		public int Points { get; private set; }
 
-        // Account status (Active/Inactive)
-        public AccountStatus Status { get; private set; }
+		// Account status (Active / Inactive)
+		public AccountStatus Status { get; private set; }
 
-        // Hashed password used for authentication
-        public string PasswordHash { get; private set; } = string.Empty;
+		// Hashed password used for authentication
+		public string PasswordHash { get; private set; } = string.Empty;
 
-        // Navigation property to User
-        public User? User { get; private set; }
+		// Navigation property to User
+		public User? User { get; private set; }
 
-        // Constructor for EF Core
-        private UserAccount() { }
+		// Constructor for EF Core
+		private UserAccount() { }
 
-        // Main constructor – new account starts with 0 points and Active status
-        public UserAccount(Guid userId)
-        {
-            if (userId == Guid.Empty)
-                throw new ValidationException("Invalid UserId.");
+		// Main constructor – new account starts with 0 points and Active status
+		public UserAccount(Guid userId)
+		{
+			if (userId == Guid.Empty)
+				throw new ValidationException("Invalid UserId.");
 
-            UserId = userId;
-            Points = 0;
-            Status = AccountStatus.Active;
-        }
+			UserId = userId;
+			Points = 0;
+			Status = AccountStatus.Active;
+		}
 
-        // Set / change hashed password
-        public void SetPasswordHash(string passwordHash)
-        {
-            if (string.IsNullOrWhiteSpace(passwordHash))
-                throw new ValidationException("Password hash cannot be empty.");
+		// Set / change hashed password
+		public void SetPasswordHash(string passwordHash)
+		{
+			if (string.IsNullOrWhiteSpace(passwordHash))
+				throw new ValidationException("Password hash cannot be empty.");
 
-            PasswordHash = passwordHash;
-            MarkUpdated();
-        }
+			PasswordHash = passwordHash;
+			MarkUpdated();
+		}
 
-        // Add points to balance
-        public void AddPoints(int points)
-        {
-            if (points <= 0)
-                throw new ValidationException("Points must be greater than 0.");
+		// Add points to balance (earning)
+		public void AddPoints(int points)
+		{
+			if (points <= 0)
+				throw new ValidationException("Points must be greater than 0.");
 
-            if (Status != AccountStatus.Active)
-                throw new BusinessRuleException("Only active accounts can receive points.");
+			if (Status != AccountStatus.Active)
+				throw new BusinessRuleException("Only active accounts can receive points.");
 
-            Points += points;
-            MarkUpdated();
-        }
+			Points += points;
+			MarkUpdated();
+		}
 
-        // Deduct points from balance
-        public void DeductPoints(int points)
-        {
-            if (points <= 0)
-                throw new ValidationException("Points must be greater than 0.");
+		// Deduct points from balance (redeem)
+		public void DeductPoints(int points)
+		{
+			if (points <= 0)
+				throw new ValidationException("Points must be greater than 0.");
 
-            if (Points < points)
-                throw new BusinessRuleException("Insufficient points.");
+			if (Status != AccountStatus.Active)
+				throw new BusinessRuleException("Only active accounts can redeem points.");
 
-            Points -= points;
-            MarkUpdated();
-        }
+			if (Points < points)
+				throw new BusinessRuleException("Insufficient points.");
 
-        // Set exact points (admin use)
-        public void SetPoints(int points)
-        {
-            if (points < 0)
-                throw new ValidationException("Points cannot be negative.");
+			Points -= points;
+			MarkUpdated();
+		}
 
-            Points = points;
-            MarkUpdated();
-        }
+		// ✅ SAFE ADJUST (earn + / redeem -)
+		public void AdjustPoints(int delta)
+		{
+			if (Status != AccountStatus.Active)
+				throw new BusinessRuleException("Account must be active.");
 
-        // Activate account
-        public void Activate()
-        {
-            Status = AccountStatus.Active;
-            MarkUpdated();
-        }
+			var newBalance = Points + delta;
 
-        // Deactivate account
-        public void Deactivate()
-        {
-            Status = AccountStatus.Inactive;
-            MarkUpdated();
-        }
-    }
+			if (newBalance < 0)
+				throw new BusinessRuleException("Points balance cannot be negative.");
+
+			Points = newBalance;
+			MarkUpdated();
+		}
+
+		// Activate account
+		public void Activate()
+		{
+			Status = AccountStatus.Active;
+			MarkUpdated();
+		}
+
+		// Deactivate account
+		public void Deactivate()
+		{
+			Status = AccountStatus.Inactive;
+			MarkUpdated();
+		}
+	}
 }

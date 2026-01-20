@@ -6,327 +6,309 @@ using Rewardsystem_Domain.Domain.Entities.Reward;
 using Rewardsystem_Domain.Domain.Entities.Transactions;
 using Rewardsystem_Domain.Domain.Entities.User;
 
-
 namespace RewardSystem_Infrastructure.Infrastructure.Persistence
 {
-    // Main EF Core DbContext used for database access.
-    public class RewardDbContext : DbContext
-    {
-        public RewardDbContext(DbContextOptions<RewardDbContext> options)
-            : base(options)
-        {
-        }
+	public class RewardDbContext : DbContext
+	{
+		public RewardDbContext(DbContextOptions<RewardDbContext> options)
+			: base(options)
+		{
+		}
 
-        // Users table.
-        public DbSet<User> Users => Set<User>();
+		public DbSet<User> Users => Set<User>();
+		public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
+		public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
 
-        // User accounts table (points balances).
-        public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
+		public DbSet<Product> Products => Set<Product>();
+		public DbSet<ProductInventory> ProductInventories => Set<ProductInventory>();
 
-        // User profiles table (phone, department, location).
-        public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
+		public DbSet<EventDefinition> EventDefinitions => Set<EventDefinition>();
+		public DbSet<EventInstance> EventInstances => Set<EventInstance>();
+		public DbSet<EventRewardRule> EventRewardRules => Set<EventRewardRule>();
 
-        // Products catalog table.
-        public DbSet<Product> Products => Set<Product>();
+		public DbSet<Reward> Rewards => Set<Reward>();
+		public DbSet<RewardPoints> RewardPoints => Set<RewardPoints>();
+		public DbSet<RewardTransaction> RewardTransactions => Set<RewardTransaction>();
+		public DbSet<PointsTransaction> PointsTransactions => Set<PointsTransaction>();
 
-        // Product inventory table (stock per product).
-        public DbSet<ProductInventory> ProductInventories => Set<ProductInventory>();
+		public DbSet<RedemptionRequest> RedemptionRequests => Set<RedemptionRequest>();
+		public DbSet<RedemptionProcess> RedemptionProcesses => Set<RedemptionProcess>();
+		public DbSet<RedemptionRecord> RedemptionRecords => Set<RedemptionRecord>();
 
-        // Event definitions table (reusable event templates).
-        public DbSet<EventDefinition> EventDefinitions => Set<EventDefinition>();
+		public DbSet<Transaction> Transactions => Set<Transaction>();
 
-        // Event instances table (scheduled occurrences).
-        public DbSet<EventInstance> EventInstances => Set<EventInstance>();
+		protected override void OnModelCreating(ModelBuilder modelBuilder)
+		{
+			base.OnModelCreating(modelBuilder);
 
-        // Event reward rules table (condition → points).
-        public DbSet<EventRewardRule> EventRewardRules => Set<EventRewardRule>();
+			ConfigureUser(modelBuilder);
+			ConfigureProduct(modelBuilder);
+			ConfigureEvent(modelBuilder);
+			ConfigureReward(modelBuilder);
+			ConfigureRedemption(modelBuilder);
+			ConfigureTransaction(modelBuilder);
+		}
 
-        // Reward table (reward definitions).
-        public DbSet<Reward> Rewards => Set<Reward>();
+		// ---------------- USER ----------------
+		private static void ConfigureUser(ModelBuilder modelBuilder)
+		{
+			modelBuilder.Entity<User>(entity =>
+			{
+				entity.HasKey(x => x.Id);
 
-        // Reward points table (points configuration for rewards).
-        public DbSet<RewardPoints> RewardPoints => Set<RewardPoints>();
+				entity.Property(x => x.Name)
+					  .IsRequired()
+					  .HasMaxLength(200);
 
-        // Reward transactions table (reward → user).
-        public DbSet<RewardTransaction> RewardTransactions => Set<RewardTransaction>();
+				entity.OwnsOne(x => x.Email, email =>
+				{
+					email.Property(e => e.Value)
+						 .HasColumnName("Email")
+						 .IsRequired()
+						 .HasMaxLength(200);
 
-        // Points transactions table (earn / redeem history).
-        public DbSet<PointsTransaction> PointsTransactions => Set<PointsTransaction>();
+					email.HasIndex(e => e.Value).IsUnique();
+				});
 
-        // Redemption requests table (user requests to redeem).
-        public DbSet<RedemptionRequest> RedemptionRequests => Set<RedemptionRequest>();
+				entity.OwnsOne(x => x.EmployeeId, emp =>
+				{
+					emp.Property(e => e.Value)
+					   .HasColumnName("EmployeeId")
+					   .IsRequired()
+					   .HasMaxLength(50);
 
-        // Redemption processes table (lifecycle of redemption).
-        public DbSet<RedemptionProcess> RedemptionProcesses => Set<RedemptionProcess>();
+					emp.HasIndex(e => e.Value).IsUnique();
+				});
 
-        // Redemption records table (fulfilled redemptions).
-        public DbSet<RedemptionRecord> RedemptionRecords => Set<RedemptionRecord>();
+				entity.Property(x => x.IsDeleted).IsRequired();
+				entity.Property(x => x.CreatedAt).IsRequired();
 
-        // Business transactions table (generic business transaction).
-        public DbSet<Transaction> Transactions => Set<Transaction>();
+				entity.HasOne(x => x.Account)
+					  .WithOne(a => a.User!)
+					  .HasForeignKey<UserAccount>(a => a.UserId)
+					  .OnDelete(DeleteBehavior.Cascade);
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
+				entity.HasOne(x => x.Profile)
+					  .WithOne(p => p.User!)
+					  .HasForeignKey<UserProfile>(p => p.UserId)
+					  .OnDelete(DeleteBehavior.Cascade);
+			});
+		}
 
-            ConfigureUser(modelBuilder);
-            ConfigureProduct(modelBuilder);
-            ConfigureEvent(modelBuilder);
-            ConfigureReward(modelBuilder);
-            ConfigureRedemption(modelBuilder);
-            ConfigureTransaction(modelBuilder);
-        }
+		// ---------------- PRODUCT ----------------
+		private static void ConfigureProduct(ModelBuilder modelBuilder)
+		{
+			modelBuilder.Entity<Product>(entity =>
+			{
+				entity.HasKey(x => x.Id);
 
-        // ---------------- USER ----------------
-        private static void ConfigureUser(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<User>(entity =>
-            {
-                entity.HasKey(x => x.Id);
+				entity.Property(x => x.Name)
+					  .IsRequired()
+					  .HasMaxLength(200);
 
-                entity.Property(x => x.Name)
-                    .IsRequired()
-                    .HasMaxLength(200);
+				entity.Property(x => x.Description)
+					  .HasMaxLength(1000);
 
-                entity.OwnsOne(x => x.Email, email =>
-                {
-                    email.Property(e => e.Value)
-                        .HasColumnName("Email")
-                        .IsRequired()
-                        .HasMaxLength(200);
-                });
+				entity.Property(x => x.RequiredPoints).IsRequired();
+				entity.Property(x => x.IsActive).IsRequired();
+				entity.Property(x => x.CreatedAt).IsRequired();
 
-                entity.OwnsOne(x => x.EmployeeId, emp =>
-                {
-                    emp.Property(e => e.Value)
-                        .HasColumnName("EmployeeId")
-                        .IsRequired()
-                        .HasMaxLength(50);
-                });
+				entity.OwnsOne(x => x.Sku, sku =>
+				{
+					sku.Property(s => s.Value)
+					   .HasColumnName("Sku")
+					   .IsRequired()
+					   .HasMaxLength(50);
+				});
+			});
 
-                entity.Property(x => x.CreatedAt).IsRequired();
-                entity.Property(x => x.IsDeleted).IsRequired();
+			modelBuilder.Entity<ProductInventory>(entity =>
+			{
+				entity.HasKey(x => x.Id);
 
-                entity.HasOne(x => x.Account)
-                    .WithOne(a => a.User!)
-                    .HasForeignKey<UserAccount>(a => a.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
+				entity.Property(x => x.ProductId).IsRequired();
+				entity.Property(x => x.StockQuantity).IsRequired();
+				entity.Property(x => x.IsActive).IsRequired();
+				entity.Property(x => x.CreatedAt).IsRequired();
 
-                entity.HasOne(x => x.Profile)
-                    .WithOne(p => p.User!)
-                    .HasForeignKey<UserProfile>(p => p.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
+				entity.HasOne(pi => pi.Product)
+					  .WithMany()
+					  .HasForeignKey(pi => pi.ProductId)
+					  .OnDelete(DeleteBehavior.Cascade);
+			});
+		}
 
-            modelBuilder.Entity<UserAccount>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.UserId).IsRequired();
-                entity.Property(x => x.Points).IsRequired();
-                entity.Property(x => x.PasswordHash).HasMaxLength(500);
-                entity.Property(x => x.Status).IsRequired();
-                entity.Property(x => x.CreatedAt).IsRequired();
-            });
+		// ---------------- EVENTS ----------------
+		private static void ConfigureEvent(ModelBuilder modelBuilder)
+		{
+			modelBuilder.Entity<EventDefinition>(entity =>
+			{
+				entity.HasKey(x => x.Id);
+				entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
+				entity.Property(x => x.Description).HasMaxLength(1000);
+				entity.Property(x => x.RewardPoints).IsRequired();
+				entity.Property(x => x.IsActive).IsRequired();
+				entity.Property(x => x.CreatedAt).IsRequired();
+			});
 
-            modelBuilder.Entity<UserProfile>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.UserId).IsRequired();
-                entity.Property(x => x.PhoneNumber).IsRequired().HasMaxLength(50);
-                entity.Property(x => x.Department).IsRequired().HasMaxLength(100);
-                entity.Property(x => x.Location).IsRequired().HasMaxLength(100);
-                entity.Property(x => x.CreatedAt).IsRequired();
-            });
-        }
+			modelBuilder.Entity<EventInstance>(entity =>
+			{
+				entity.HasKey(x => x.Id);
+				entity.Property(x => x.EventDefinitionId).IsRequired();
+				entity.Property(x => x.StartTime).IsRequired();
+				entity.Property(x => x.EndTime).IsRequired();
+				entity.Property(x => x.IsCompleted).IsRequired();
+				entity.Property(x => x.IsCancelled).IsRequired();
+				entity.Property(x => x.CreatedAt).IsRequired();
 
-        // ---------------- PRODUCT + INVENTORY ----------------
-        private static void ConfigureProduct(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<Product>(entity =>
-            {
-                entity.HasKey(x => x.Id);
+				entity.HasOne<EventDefinition>()
+					  .WithMany()
+					  .HasForeignKey(x => x.EventDefinitionId)
+					  .OnDelete(DeleteBehavior.Restrict);
+			});
 
-                entity.Property(x => x.Name)
-                    .IsRequired()
-                    .HasMaxLength(200);
+			modelBuilder.Entity<EventRewardRule>(entity =>
+			{
+				entity.HasKey(x => x.Id);
+				entity.Property(x => x.EventDefinitionId).IsRequired();
+				entity.Property(x => x.Condition).IsRequired().HasMaxLength(500);
+				entity.Property(x => x.Points).IsRequired();
+				entity.Property(x => x.IsActive).IsRequired();
+				entity.Property(x => x.CreatedAt).IsRequired();
 
-                entity.Property(x => x.Description)
-                    .HasMaxLength(1000);
+				entity.HasOne<EventDefinition>()
+					  .WithMany()
+					  .HasForeignKey(x => x.EventDefinitionId)
+					  .OnDelete(DeleteBehavior.Cascade);
+			});
+		}
 
-                entity.Property(x => x.RequiredPoints)
-                    .IsRequired();
+		// ---------------- REWARD + POINTS ----------------
+		private static void ConfigureReward(ModelBuilder modelBuilder)
+		{
+			modelBuilder.Entity<Reward>(entity =>
+			{
+				entity.HasKey(x => x.Id);
+				entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
+				entity.Property(x => x.Description).HasMaxLength(1000);
+				entity.Property(x => x.Type).IsRequired();
+				entity.Property(x => x.IsActive).IsRequired();
+				entity.Property(x => x.CreatedAt).IsRequired();
+			});
 
-                entity.Property(x => x.IsActive)
-                    .IsRequired();
+			modelBuilder.Entity<RewardPoints>(entity =>
+			{
+				entity.HasKey(x => x.Id);
+				entity.Property(x => x.RewardId).IsRequired();
+				entity.Property(x => x.Points).IsRequired();
+				entity.Property(x => x.CreatedAt).IsRequired();
 
-                entity.Property(x => x.CreatedAt)
-                    .IsRequired();
+				entity.HasOne<Reward>()
+					  .WithMany()
+					  .HasForeignKey(x => x.RewardId)
+					  .OnDelete(DeleteBehavior.Cascade);
+			});
 
-                // ✅ SKU value object ko owned type ki tarah map karo
-                entity.OwnsOne(x => x.Sku, sku =>
-                {
-                    // yahan SKU ki string property ko column se map kar rahe hain
-                    sku.Property(s => s.Value)           // agar property ka naam Code hai to .Code kar dena
-                       .HasColumnName("Sku")
-                       .HasMaxLength(50)
-                       .IsRequired();
-                });
-            });
+			modelBuilder.Entity<PointsTransaction>(entity =>
+			{
+				entity.HasKey(x => x.Id);
 
-            modelBuilder.Entity<ProductInventory>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.ProductId).IsRequired();
-                entity.Property(x => x.StockQuantity).IsRequired();
-                entity.Property(x => x.IsActive).IsRequired();
-                entity.Property(x => x.CreatedAt).IsRequired();
+				entity.Property(x => x.UserId).IsRequired();
+				entity.Property(x => x.Points).IsRequired();
+				entity.Property(x => x.Type).IsRequired();
+				entity.Property(x => x.Description).HasMaxLength(500);
+				entity.Property(x => x.CreatedAt).IsRequired();
 
-                entity.HasOne<Product>()
-                    .WithOne()
-                    .HasForeignKey<ProductInventory>(pi => pi.ProductId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-        }
+				entity.HasOne<User>()
+					  .WithMany()
+					  .HasForeignKey(x => x.UserId)
+					  .OnDelete(DeleteBehavior.Restrict);
+			});
+		}
 
-        // ---------------- EVENTS ----------------
-        private static void ConfigureEvent(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<EventDefinition>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
-                entity.Property(x => x.Description).HasMaxLength(1000);
-                entity.Property(x => x.RewardPoints).IsRequired();
-                entity.Property(x => x.IsActive).IsRequired();
-                entity.Property(x => x.CreatedAt).IsRequired();
-            });
+		private static void ConfigureRedemption(ModelBuilder modelBuilder)
+		{
+			modelBuilder.Entity<RedemptionRequest>(entity =>
+			{
+				entity.HasKey(x => x.Id);
 
-            modelBuilder.Entity<EventInstance>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.EventDefinitionId).IsRequired();
-                entity.Property(x => x.StartTime).IsRequired();
-                entity.Property(x => x.EndTime).IsRequired();
-                entity.Property(x => x.IsCompleted).IsRequired();
-                entity.Property(x => x.IsCancelled).IsRequired();
-                entity.Property(x => x.CreatedAt).IsRequired();
+				entity.Property(x => x.UserId).IsRequired();
+				entity.Property(x => x.ProductId).IsRequired();
+				entity.Property(x => x.PointsUsed).IsRequired();
+				entity.Property(x => x.Status).IsRequired();
+				entity.Property(x => x.Note).HasMaxLength(500);
+				entity.Property(x => x.CreatedAt).IsRequired();
 
-                entity.HasOne<EventDefinition>()
-                    .WithMany()
-                    .HasForeignKey(x => x.EventDefinitionId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
+				// ❗ Prevent duplicate pending requests
+				entity.HasIndex(x => new { x.UserId, x.ProductId })
+					  .HasFilter("[Status] = 0") // Pending
+					  .IsUnique();
 
-            modelBuilder.Entity<EventRewardRule>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.EventDefinitionId).IsRequired();
-                entity.Property(x => x.Condition).IsRequired().HasMaxLength(500);
-                entity.Property(x => x.Points).IsRequired();
-                entity.Property(x => x.IsActive).IsRequired();
-                entity.Property(x => x.CreatedAt).IsRequired();
+				entity.HasOne<User>()
+					  .WithMany()
+					  .HasForeignKey(x => x.UserId)
+					  .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne<EventDefinition>()
-                    .WithMany()
-                    .HasForeignKey(x => x.EventDefinitionId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-        }
+				entity.HasOne<Product>()
+					  .WithMany()
+					  .HasForeignKey(x => x.ProductId)
+					  .OnDelete(DeleteBehavior.Restrict);
+			});
 
-        // ---------------- REWARD ----------------
-        private static void ConfigureReward(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<Reward>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
-                entity.Property(x => x.Description).HasMaxLength(1000);
-                entity.Property(x => x.Type).IsRequired();
-                entity.Property(x => x.IsActive).IsRequired();
-                entity.Property(x => x.CreatedAt).IsRequired();
-            });
+			modelBuilder.Entity<RedemptionProcess>(entity =>
+			{
+				entity.HasKey(x => x.Id);
 
-            modelBuilder.Entity<RewardPoints>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.RewardId).IsRequired();
-                entity.Property(x => x.Points).IsRequired();
-                entity.Property(x => x.CreatedAt).IsRequired();
+				entity.Property(x => x.RedemptionId).IsRequired();
+				entity.Property(x => x.PointsUsed).IsRequired();
+				entity.Property(x => x.Status).IsRequired();
+				entity.Property(x => x.Note).HasMaxLength(500);
+				entity.Property(x => x.CreatedAt).IsRequired();
 
-                entity.HasOne<Reward>()
-                    .WithMany()
-                    .HasForeignKey(x => x.RewardId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
+				// 🔗 Strong FK link
+				entity.HasOne<RedemptionRequest>()
+					  .WithOne()
+					  .HasForeignKey<RedemptionProcess>(x => x.RedemptionId)
+					  .OnDelete(DeleteBehavior.Cascade);
+			});
 
-            modelBuilder.Entity<RewardTransaction>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.RewardId).IsRequired();
-                entity.Property(x => x.UserId).IsRequired();
-                entity.Property(x => x.PointsGranted).IsRequired();
-                entity.Property(x => x.TransactionType).IsRequired();
-                entity.Property(x => x.Reference).HasMaxLength(200);
-                entity.Property(x => x.CreatedAt).IsRequired();
-            });
+			modelBuilder.Entity<RedemptionRecord>(entity =>
+			{
+				entity.HasKey(x => x.Id);
 
-            modelBuilder.Entity<PointsTransaction>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.UserId).IsRequired();
-                entity.Property(x => x.Points).IsRequired();
-                entity.Property(x => x.Type).IsRequired();
-                entity.Property(x => x.Description).HasMaxLength(500);
-                entity.Property(x => x.CreatedAt).IsRequired();
-            });
-        }
+				entity.Property(x => x.UserId).IsRequired();
+				entity.Property(x => x.ProductId).IsRequired();
+				entity.Property(x => x.Reference).HasMaxLength(200);
+				entity.Property(x => x.RedeemedAt).IsRequired();
+				entity.Property(x => x.CreatedAt).IsRequired();
 
-        // ---------------- REDEMPTION ----------------
-        private static void ConfigureRedemption(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<RedemptionRequest>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.UserId).IsRequired();
-                entity.Property(x => x.ProductId).IsRequired();
-                entity.Property(x => x.PointsUsed).IsRequired();
-                entity.Property(x => x.Status).IsRequired();
-                entity.Property(x => x.CreatedAt).IsRequired();
-            });
+				entity.HasOne<User>()
+					  .WithMany()
+					  .HasForeignKey(x => x.UserId)
+					  .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<RedemptionProcess>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.RedemptionId).IsRequired();
-                entity.Property(x => x.PointsUsed).IsRequired();
-                entity.Property(x => x.Status).IsRequired();
-                entity.Property(x => x.CreatedAt).IsRequired();
-            });
+				entity.HasOne<Product>()
+					  .WithMany()
+					  .HasForeignKey(x => x.ProductId)
+					  .OnDelete(DeleteBehavior.Restrict);
+			});
+		}
 
-            modelBuilder.Entity<RedemptionRecord>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.UserId).IsRequired();
-                entity.Property(x => x.ProductId).IsRequired();
-                entity.Property(x => x.RedeemedAt).IsRequired();
-                entity.Property(x => x.CreatedAt).IsRequired();
-            });
-        }
+		// ---------------- TRANSACTION ----------------
+		private static void ConfigureTransaction(ModelBuilder modelBuilder)
+		{
+			modelBuilder.Entity<Transaction>(entity =>
+			{
+				entity.HasKey(x => x.Id);
 
-        // ---------------- TRANSACTION ----------------
-        private static void ConfigureTransaction(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<Transaction>(entity =>
-            {
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.UserId).IsRequired();
-                entity.Property(x => x.Amount).IsRequired();
-                entity.Property(x => x.RewardPointsEarned).IsRequired();
-                entity.Property(x => x.Type).IsRequired();
-                entity.Property(x => x.Status).IsRequired();
-                entity.Property(x => x.Date).IsRequired();
-                entity.Property(x => x.CreatedAt).IsRequired();
-            });
-        }
-    }
+				entity.Property(x => x.UserId).IsRequired();
+				entity.Property(x => x.Amount).HasPrecision(18, 4).IsRequired();
+				entity.Property(x => x.RewardPointsEarned).IsRequired();
+				entity.Property(x => x.Type).IsRequired();
+				entity.Property(x => x.Status).IsRequired();
+				entity.Property(x => x.Date).IsRequired();
+				entity.Property(x => x.CreatedAt).IsRequired();
+			});
+		}
+	}
 }

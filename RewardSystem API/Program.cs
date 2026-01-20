@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
+
 using RewardSystem_API.Mappings;
-using RewardSystem_API.Services;
+
 using RewardSystem_Application.Common;
 using RewardSystem_Application.Configuration;
 using RewardSystem_Application.Interfaces.Auth;
@@ -19,6 +21,7 @@ using RewardSystem_Application.Interfaces.Transaction;
 using RewardSystem_Application.Interfaces.Users;
 using RewardSystem_Application.Repositories;
 using RewardSystem_Application.Services;
+
 using RewardSystem_Infrastructure.Infrastructure.Authentication;
 using RewardSystem_Infrastructure.Infrastructure.Persistence;
 using RewardSystem_Infrastructure.Infrastructure.Persistence.Repositories;
@@ -26,56 +29,77 @@ using RewardSystem_Infrastructure.Infrastructure.Scripts;
 using RewardSystem_Infrastructure.Infrastructure.Security;
 using RewardSystem_Infrastructure.Persistence.Repositories;
 
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
-
 var builder = WebApplication.CreateBuilder(args);
 
+// Allow frontend (localhost:4200) to call this API during development
+var frontendOrigin = "http://localhost:4200";
+var corsPolicyName = "AllowFrontend";
+
 //
-// 1. Controllers + Swagger
+// 1. CONFIGURATION
+//
+var connectionString = builder.Configuration.GetConnectionString("RewardDb");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+	throw new InvalidOperationException(
+		"Connection string 'RewardDb' is missing. Check appsettings.json");
+}
+
+//
+// 2. CONTROLLERS + SWAGGER
 //
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy(name: corsPolicyName,
+		policy =>
+		{
+			policy.WithOrigins(frontendOrigin)
+				  .AllowAnyHeader()
+				  .AllowAnyMethod();
+		});
+});
+
 builder.Services.AddSwaggerGen(c =>
 {
-    // basic doc info
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "Reward System API",
-        Version = "v1",
-        Description = "Reward Points & Redemption API"
-    });
+	c.SwaggerDoc("v1", new OpenApiInfo
+	{
+		Title = "Reward System API",
+		Version = "v1",
+		Description = "Reward Points & Redemption API"
+	});
 
-    // Bearer token config for Swagger UI
-    var securityScheme = new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Description = "Enter: Bearer {your JWT token}",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT"
-    };
+	var jwtScheme = new OpenApiSecurityScheme
+	{
+		Name = "Authorization",
+		Description = "Enter: Bearer {JWT token}",
+		In = ParameterLocation.Header,
+		Type = SecuritySchemeType.Http,
+		Scheme = "bearer",
+		BearerFormat = "JWT"
+	};
 
-    c.AddSecurityDefinition("Bearer", securityScheme);
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        { securityScheme, Array.Empty<string>() }
-    });
+	c.AddSecurityDefinition("Bearer", jwtScheme);
+	c.AddSecurityRequirement(new OpenApiSecurityRequirement
+	{
+		{ jwtScheme, Array.Empty<string>() }
+	});
 });
 
 //
-// 2. DbContext + UnitOfWork
+// 3. DATABASE (EF CORE)
 //
 builder.Services.AddDbContext<RewardDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("RewardDb")));
+{
+	options.UseSqlServer(connectionString);
+});
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 //
-// 3. Repositories
+// 4. REPOSITORIES
 //
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserAccountRepository, UserAccountRepository>();
@@ -94,13 +118,13 @@ builder.Services.AddScoped<IRewardTransactionRepository, RewardTransactionReposi
 builder.Services.AddScoped<IPointsTransactionRepository, PointsTransactionRepository>();
 
 builder.Services.AddScoped<IRedemptionRequestRepository, RedemptionRequestRepository>();
-builder.Services.AddScoped<IRedemptionRecordRepository, RedemptionRecordRepository>();
 builder.Services.AddScoped<IRedemptionProcessRepository, RedemptionProcessRepository>();
+builder.Services.AddScoped<IRedemptionRecordRepository, RedemptionRecordRepository>();
 
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 
 //
-// 4. Application services
+// 5. APPLICATION SERVICES (🔥 FIXED)
 //
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -125,93 +149,79 @@ builder.Services.AddScoped<IRedemptionRecordService, RedemptionRecordService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 
 //
-// 5. API-layer helper services
-//
-builder.Services.AddScoped<IUserApiService, UserApiService>();
-builder.Services.AddScoped<IProductApiService, ProductApiService>();
-builder.Services.AddScoped<IInventoryApiService, InventoryApiService>();
-builder.Services.AddScoped<IEventApiService, EventApiService>();
-builder.Services.AddScoped<IRewardApiService, RewardApiService>();
-builder.Services.AddScoped<IRedemptionApiService, RedemptionApiService>();
-
-//
-// 6. AutoMapper
+// 6. AUTOMAPPER
 //
 builder.Services.AddAutoMapper(cfg =>
 {
-    cfg.AddProfile<MappingProfile>();
+	cfg.AddProfile<MappingProfile>();
 });
 
 //
-// 7. Security: hashing + JWT
+// 7. JWT AUTHENTICATION
 //
+builder.Services.Configure<JwtSettings>(
+	builder.Configuration.GetSection("JwtSettings"));
+
+builder.Services.AddSingleton(sp =>
+	sp.GetRequiredService<IOptions<JwtSettings>>().Value);
+
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
-builder.Services.Configure<JwtSettings>(
-    builder.Configuration.GetSection("JwtSettings"));
-
-builder.Services.AddSingleton(sp =>
-    sp.GetRequiredService<IOptions<JwtSettings>>().Value);
-
-// Clear default claim type mapping
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var jwtSettings = builder.Configuration
-    .GetSection("JwtSettings")
-    .Get<JwtSettings>()
-    ?? throw new InvalidOperationException("JwtSettings configuration section is missing.");
+	.GetSection("JwtSettings")
+	.Get<JwtSettings>()
+	?? throw new InvalidOperationException("JwtSettings missing");
 
-var keyBytes = Encoding.UTF8.GetBytes(jwtSettings.Secret);
+var key = Encoding.UTF8.GetBytes(jwtSettings.Secret);
 
-builder.Services
-    .AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings.Issuer,
-            ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
-        };
-    });
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+	.AddJwtBearer(options =>
+	{
+		options.TokenValidationParameters = new TokenValidationParameters
+		{
+			ValidateIssuer = true,
+			ValidateAudience = true,
+			ValidateLifetime = true,
+			ValidateIssuerSigningKey = true,
+			ValidIssuer = jwtSettings.Issuer,
+			ValidAudience = jwtSettings.Audience,
+			IssuerSigningKey = new SymmetricSecurityKey(key)
+		};
+	});
 
 builder.Services.AddAuthorization();
 
 //
-// 8. Build + migrate + seed + run
+// 8. BUILD APP
 //
 var app = builder.Build();
 
-// migrate + seed DB
+//
+// 9. MIGRATE + SEED DATABASE
+//
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<RewardDbContext>();
-    await db.Database.MigrateAsync();
-    await DbSeeder.SeedAsync(db);
+	var db = scope.ServiceProvider.GetRequiredService<RewardDbContext>();
+	await db.Database.MigrateAsync();
+	await DbSeeder.SeedAsync(db);
 }
 
+//
+// 10. MIDDLEWARE PIPELINE
+//
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Reward System API v1");
-        c.RoutePrefix = "swagger";
-    });
+	app.UseSwagger();
+	app.UseSwaggerUI();
 }
 
-// app.UseHttpsRedirection(); // optional
-
 app.UseRouting();
+
+// Enable CORS for frontend
+app.UseCors(corsPolicyName);
 
 app.UseAuthentication();
 app.UseAuthorization();

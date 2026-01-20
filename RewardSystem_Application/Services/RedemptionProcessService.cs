@@ -1,86 +1,120 @@
-﻿using RewardSystem_Application.Common;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using RewardSystem_Application.Common;
 using RewardSystem_Application.Interfaces.Redemption;
+using RewardSystem_Application.Interfaces.Users;
+using RewardSystem_Application.Interfaces.Product;
 using RewardSystem_Application.Repositories;
 using Rewardsystem_Domain.Domain.Common;
-using Rewardsystem_Domain.Domain.Exceptions;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Rewardsystem_Domain.Domain.Entities.Redemption;
+using Rewardsystem_Domain.Domain.Enums;
 
 namespace RewardSystem_Application.Services
 {
-    // Handles fulfillment: creates redemption records, deducts points and reduces stock when completing approved requests.
-    public class RedemptionProcessService : IRedemptionProcessService
-    {
-        private readonly IRedemptionRequestRepository _requestRepo;
-        private readonly IRedemptionRecordRepository _recordRepo;
-        private readonly IUserAccountRepository _accountRepo;
-        private readonly IProductInventoryRepository _inventoryRepo;
-        private readonly IUnitOfWork _uow;
+	/// <summary>
+	/// Handles completion and fulfillment of approved redemption requests.
+	/// </summary>
+	public sealed class RedemptionProcessService : IRedemptionProcessService
+	{
+		private readonly IRedemptionRequestRepository _requestRepo;
+		private readonly IRedemptionProcessRepository _processRepo;
+		private readonly IRedemptionRecordRepository _recordRepo;
+		private readonly IUserAccountService _accountService;
+		private readonly IProductService _productService;
+		private readonly IUnitOfWork _uow;
 
-        public RedemptionProcessService(
-            IRedemptionRequestRepository requestRepo,
-            IRedemptionRecordRepository recordRepo,
-            IUserAccountRepository accountRepo,
-            IProductInventoryRepository inventoryRepo,
-            IUnitOfWork uow)
-        {
-            _requestRepo = requestRepo ?? throw new ArgumentNullException(nameof(requestRepo));
-            _recordRepo = recordRepo ?? throw new ArgumentNullException(nameof(recordRepo));
-            _accountRepo = accountRepo ?? throw new ArgumentNullException(nameof(accountRepo));
-            _inventoryRepo = inventoryRepo ?? throw new ArgumentNullException(nameof(inventoryRepo));
-            _uow = uow ?? throw new ArgumentNullException(nameof(uow));
-        }
+		public RedemptionProcessService(
+			IRedemptionRequestRepository requestRepo,
+			IRedemptionProcessRepository processRepo,
+			IRedemptionRecordRepository recordRepo,
+			IUserAccountService accountService,
+			IProductService productService,
+			IUnitOfWork uow)
+		{
+			_requestRepo = requestRepo ?? throw new ArgumentNullException(nameof(requestRepo));
+			_processRepo = processRepo ?? throw new ArgumentNullException(nameof(processRepo));
+			_recordRepo = recordRepo ?? throw new ArgumentNullException(nameof(recordRepo));
+			_accountService = accountService ?? throw new ArgumentNullException(nameof(accountService));
+			_productService = productService ?? throw new ArgumentNullException(nameof(productService));
+			_uow = uow ?? throw new ArgumentNullException(nameof(uow));
+		}
 
-        // Create a fulfillment record (reduces stock and persists record).
-        public async Task<Rewardsystem_Domain.Domain.Entities.Redemption.RedemptionRecord> CreateRecordAsync(Guid userId, Guid productId, string? reference = null, CancellationToken ct = default)
-        {
-            if (userId == Guid.Empty) throw new ValidationException("UserId required.");
-            if (productId == Guid.Empty) throw new ValidationException("ProductId required.");
+		/// <summary>
+		/// Completes an approved redemption request.
+		/// Deducts points, reduces stock, creates process + record.
+		/// </summary>
+		public async Task<RedemptionRecord> CompleteRequestAsync(
+			Guid requestId,
+			string? reference = null,
+			CancellationToken ct = default)
+		{
+			if (requestId == Guid.Empty)
+				throw new ValidationException("RequestId cannot be empty.");
 
-            var inv = await _inventoryRepo.GetByProductIdAsync(productId, ct) ?? throw new InvalidOperationException("Inventory not found.");
-            if (inv.StockQuantity <= 0) throw new BusinessRuleException("Out of stock.");
+			var request = await _requestRepo.GetByIdAsync(requestId, ct)
+						  ?? throw new InvalidOperationException("Redemption request not found.");
 
-            inv.ReduceStock(1);
-            await _inventoryRepo.UpdateAsync(inv, ct);
+			// Prevent double completion
+			if (request.Status == RedemptionStatus.Completed)
+				throw new BusinessRuleException("Redemption already completed.");
 
-            var rec = new Rewardsystem_Domain.Domain.Entities.Redemption.RedemptionRecord(userId, productId);
-            await _recordRepo.AddAsync(rec, ct);
+			if (request.Status != RedemptionStatus.Approved)
+				throw new BusinessRuleException("Only approved requests can be completed.");
 
-            await _uow.SaveChangesAsync(ct);
-            return rec;
-        }
+			// 1️⃣ Deduct points from user account
+			var deducted = await _accountService.TryDeductPointsAsync(
+				request.UserId,
+				request.PointsUsed,
+				"Product redemption",
+				ct);
 
-        // Complete an approved redemption request: deduct points, reduce stock, mark completed, and record redemption.
-        public async Task<Rewardsystem_Domain.Domain.Entities.Redemption.RedemptionRecord> CompleteRequestAsync(Guid requestId, string? reference = null, CancellationToken ct = default)
-        {
-            var req = await _requestRepo.GetByIdAsync(requestId, ct) ?? throw new InvalidOperationException("Request not found.");
-            if (req.Status != Rewardsystem_Domain.Domain.Enums.RedemptionStatus.Approved)
-                throw new BusinessRuleException("Only approved requests can be completed.");
+			if (!deducted)
+				throw new BusinessRuleException("Insufficient points.");
 
-            var productId = req.ProductId;
-            var userId = req.UserId;
+			// 2️⃣ Reduce product stock (1 unit)
+			await _productService.AdjustStockAsync(request.ProductId, -1, ct);
 
-            var inv = await _inventoryRepo.GetByProductIdAsync(productId, ct) ?? throw new InvalidOperationException("Inventory not found.");
-            if (inv.StockQuantity <= 0) throw new BusinessRuleException("Out of stock.");
+			// 3️⃣ Create redemption process (audit / lifecycle)
+			var process = new RedemptionProcess(request.Id, request.PointsUsed);
+			process.MarkCompleted();
+			await _processRepo.AddAsync(process, ct);
 
-            var acc = await _accountRepo.GetByUserIdAsync(userId, ct) ?? throw new InvalidOperationException("Account not found.");
-            if (acc.Points < req.PointsUsed) throw new InsufficientPointsException("Insufficient points at completion.");
+			// 4️⃣ Create fulfillment record
+			var record = new RedemptionRecord(
+				request.UserId,
+				request.ProductId,
+				reference);
 
-            acc.DeductPoints(req.PointsUsed);
-            await _accountRepo.UpdateAsync(acc, ct);
+			await _recordRepo.AddAsync(record, ct);
 
-            inv.ReduceStock(1);
-            await _inventoryRepo.UpdateAsync(inv, ct);
+			// 5️⃣ Mark request as completed
+			request.MarkCompleted();
+			await _requestRepo.UpdateAsync(request, ct);
 
-            req.MarkCompleted();
-            await _requestRepo.UpdateAsync(req, ct);
+			await _uow.SaveChangesAsync(ct);
+			return record;
+		}
 
-            var rec = new Rewardsystem_Domain.Domain.Entities.Redemption.RedemptionRecord(userId, productId);
-            await _recordRepo.AddAsync(rec, ct);
+		/// <summary>
+		/// Creates a redemption record manually (admin / external fulfillment).
+		/// </summary>
+		public async Task<RedemptionRecord> CreateRecordAsync(
+			Guid userId,
+			Guid productId,
+			string? reference = null,
+			CancellationToken ct = default)
+		{
+			if (userId == Guid.Empty)
+				throw new ValidationException("UserId cannot be empty.");
 
-            await _uow.SaveChangesAsync(ct);
-            return rec;
-        }
-    }
+			if (productId == Guid.Empty)
+				throw new ValidationException("ProductId cannot be empty.");
+
+			var record = new RedemptionRecord(userId, productId, reference);
+			await _recordRepo.AddAsync(record, ct);
+			await _uow.SaveChangesAsync(ct);
+			return record;
+		}
+	}
 }
